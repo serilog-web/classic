@@ -4,7 +4,7 @@
 
 Web request logging and enrichment for classic ASP.NET applications (System.Web).
 
-**Package** - [[SerilogWeb.Classic|http://nuget.org/packages/serilogweb.classic]]
+**Package** - [SerilogWeb.Classic](http://nuget.org/packages/serilogweb.classic)
 | **Platforms** - .NET 4.5
 
 _This package replaces the Serilog.Extras.Web package previously included in the [Serilog project](https://github.com/serilog/serilog)._
