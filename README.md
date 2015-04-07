@@ -4,4 +4,5 @@
 
 Web request logging and enrichment for classic ASP.NET applications (System.Web).
 
-_This package replaces the Serilog.Extras.Web package previously included in the [Serilog project](https://github.com/serilog/serilog)._
+This package replaces the Serilog.Extras.Web package previously included in the [Serilog project](https://github.com/serilog/serilog).
+
