@@ -7,8 +7,8 @@
     <ProjectGuid>{13CEC8DD-6087-4FEE-AEC1-0511B8959CCD}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Serilog</RootNamespace>
-    <AssemblyName>Serilog.Extras.Web</AssemblyName>
+    <RootNamespace>SerilogWeb</RootNamespace>
+    <AssemblyName>SerilogWeb.Classic</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -21,7 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Debug\Serilog.Extras.Web.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\SerilogWeb.Classic.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,15 +31,21 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <DocumentationFile>bin\Release\Serilog.Extras.Web.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\SerilogWeb.Classic.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>..\..\assets\Serilog.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>..\..\assets\SerilogWeb.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Serilog">
+      <HintPath>..\..\packages\Serilog.1.4.204\lib\net45\Serilog.dll</HintPath>
+    </Reference>
+    <Reference Include="Serilog.FullNetFx">
+      <HintPath>..\..\packages\Serilog.1.4.204\lib\net45\Serilog.FullNetFx.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Web" />
@@ -50,37 +56,30 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extras\Web\Enrichers\HttpRequestClientHostIPEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestClientHostNameEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestRawUrlEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestTypeEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestUrlEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestUrlReferrerEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestUserAgentEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\UserNameEnricher.cs" />
+    <Compile Include="Classic\ApplicationLifecycleModule.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestClientHostIPEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestClientHostNameEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestIdEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestNumberEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestRawUrlEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestTraceIdEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestTypeEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestUrlEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestUrlReferrerEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpRequestUserAgentEnricher.cs" />
+    <Compile Include="Classic\Enrichers\HttpSessionIdEnricher.cs" />
+    <Compile Include="Classic\Enrichers\UserNameEnricher.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\..\assets\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="Extras\Web\ApplicationLifecycleModule.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestTraceIdEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestNumberEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpSessionIdEnricher.cs" />
-    <Compile Include="Extras\Web\Enrichers\HttpRequestIdEnricher.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\assets\Serilog.snk">
-      <Link>Serilog.snk</Link>
+    <None Include="..\..\assets\SerilogWeb.snk">
+      <Link>SerilogWeb.snk</Link>
     </None>
-    <None Include="Serilog.Extras.Web.nuspec">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Serilog\Serilog.csproj">
-      <Project>{0915dbd9-0f7c-4439-8d9e-74c3d579b219}</Project>
-      <Name>Serilog</Name>
-    </ProjectReference>
+    <None Include="packages.config" />
+    <None Include="SerilogWeb.Classic.nuspec" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

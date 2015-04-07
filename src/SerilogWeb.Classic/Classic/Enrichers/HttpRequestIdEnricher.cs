@@ -17,20 +17,23 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with the HttpSessionId property.
+    /// Enrich log events with a HttpRequestId GUID.
     /// </summary>
-    public class HttpSessionIdEnricher : ILogEventEnricher
+    public class HttpRequestIdEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpSessionIdPropertyName = "HttpSessionId";
+        public const string HttpRequestIdPropertyName = "HttpRequestId";
+
+        static readonly string RequestIdItemName = typeof(HttpRequestIdEnricher).Name + "+RequestId";
 
         /// <summary>
-        /// Enrich the log event with the current ASP.NET session id, if sessions are enabled.</summary>
+        /// Enrich the log event with an id assigned to the currently-executing HTTP request, if any.
+        /// </summary>
         /// <param name="logEvent">The log event to enrich.</param>
         /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
@@ -40,12 +43,15 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContext.Current.Session == null)
-                return;
+            Guid requestId;
+            var requestIdItem = HttpContext.Current.Items[RequestIdItemName];
+            if (requestIdItem == null)
+                HttpContext.Current.Items[RequestIdItemName] = requestId = Guid.NewGuid();
+            else
+                requestId = (Guid)requestIdItem;
 
-            var sessionId = HttpContext.Current.Session.SessionID;
-            var sessionIdProperty = new LogEventProperty(HttpSessionIdPropertyName, new ScalarValue(sessionId));
-            logEvent.AddPropertyIfAbsent(sessionIdProperty);
+            var requestIdProperty = new LogEventProperty(HttpRequestIdPropertyName, new ScalarValue(requestId));
+            logEvent.AddPropertyIfAbsent(requestIdProperty);
         }
     }
 }

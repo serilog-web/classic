@@ -1,4 +1,4 @@
-// Copyright 2014 Serilog Contributors
+﻿// Copyright 2014 Serilog Contributors
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,23 +17,20 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with the HTTP Request Type.
+    /// Enrich log events with the HttpSessionId property.
     /// </summary>
-    public class HttpRequestTypeEnricher : ILogEventEnricher
+    public class HttpSessionIdEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestTypePropertyName = "HttpRequestType";
-
-        #region Implementation of ILogEventEnricher
+        public const string HttpSessionIdPropertyName = "HttpSessionId";
 
         /// <summary>
-        /// Enrich the log event.
-        /// </summary>
+        /// Enrich the log event with the current ASP.NET session id, if sessions are enabled.</summary>
         /// <param name="logEvent">The log event to enrich.</param>
         /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
@@ -43,17 +40,12 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContext.Current.Request == null)
+            if (HttpContext.Current.Session == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.RequestType))
-                return;
-
-            var requestType = HttpContext.Current.Request.RequestType;
-            var httpRequestTypeProperty = new LogEventProperty(HttpRequestTypePropertyName, new ScalarValue(requestType));
-            logEvent.AddPropertyIfAbsent(httpRequestTypeProperty);
+            var sessionId = HttpContext.Current.Session.SessionID;
+            var sessionIdProperty = new LogEventProperty(HttpSessionIdPropertyName, new ScalarValue(sessionId));
+            logEvent.AddPropertyIfAbsent(sessionIdProperty);
         }
-
-        #endregion
     }
 }

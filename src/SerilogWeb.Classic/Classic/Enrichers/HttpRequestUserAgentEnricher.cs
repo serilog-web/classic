@@ -17,18 +17,17 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with the Url of the Request.
-    /// For the full, raw Url <see cref="HttpRequestRawUrlEnricher"/>.
+    /// Enrich log events with the Client User Agent.
     /// </summary>
-    public class HttpRequestUrlEnricher : ILogEventEnricher
+    public class HttpRequestUserAgentEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestUrlPropertyName = "HttpRequestUrl";
+        public const string HttpRequestUserAgentPropertyName = "HttpRequestUserAgent";
 
         #region Implementation of ILogEventEnricher
 
@@ -47,12 +46,12 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current.Request == null)
                 return;
 
-            if (HttpContext.Current.Request.Url == null)
+            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.UserAgent))
                 return;
-            
-            var requestUrl = HttpContext.Current.Request.Url.ToString();
-            var httpRequestUrlProperty = new LogEventProperty(HttpRequestUrlPropertyName, new ScalarValue(requestUrl));
-            logEvent.AddPropertyIfAbsent(httpRequestUrlProperty);
+
+            var userAgent = HttpContext.Current.Request.UserAgent;
+            var httpRequestUserAgentProperty = new LogEventProperty(HttpRequestUserAgentPropertyName, new ScalarValue(userAgent));
+            logEvent.AddPropertyIfAbsent(httpRequestUserAgentProperty);
         }
 
         #endregion

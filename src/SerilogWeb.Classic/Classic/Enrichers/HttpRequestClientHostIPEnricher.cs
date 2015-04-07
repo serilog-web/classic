@@ -18,7 +18,7 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
     /// Enrich log events with the Client IP Address.

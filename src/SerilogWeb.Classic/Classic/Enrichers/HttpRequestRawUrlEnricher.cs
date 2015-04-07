@@ -1,4 +1,4 @@
-// Copyright 2014 Serilog Contributors
+﻿// Copyright 2014 Serilog Contributors
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,17 +17,17 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with the Client User Agent.
+    /// Enrich log events with the Raw Url of the Request.
     /// </summary>
-    public class HttpRequestUserAgentEnricher : ILogEventEnricher
+    public class HttpRequestRawUrlEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestUserAgentPropertyName = "HttpRequestUserAgent";
+        public const string HttpRequestRawUrlPropertyName = "HttpRequestRawUrl";
 
         #region Implementation of ILogEventEnricher
 
@@ -46,12 +46,12 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current.Request == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.UserAgent))
+            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.RawUrl))
                 return;
 
-            var userAgent = HttpContext.Current.Request.UserAgent;
-            var httpRequestUserAgentProperty = new LogEventProperty(HttpRequestUserAgentPropertyName, new ScalarValue(userAgent));
-            logEvent.AddPropertyIfAbsent(httpRequestUserAgentProperty);
+            var requestRawUrl = HttpContext.Current.Request.RawUrl;
+            var httpRequestRawUrlProperty = new LogEventProperty(HttpRequestRawUrlPropertyName, new ScalarValue(requestRawUrl));
+            logEvent.AddPropertyIfAbsent(httpRequestRawUrlProperty);
         }
 
         #endregion

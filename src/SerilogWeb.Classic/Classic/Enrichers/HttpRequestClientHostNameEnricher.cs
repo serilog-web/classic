@@ -1,4 +1,4 @@
-﻿// Copyright 2014 Serilog Contributors
+// Copyright 2014 Serilog Contributors
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with a HttpRequestId GUID.
+    /// Enrich log events with the Client Host Name.
     /// </summary>
-    public class HttpRequestIdEnricher : ILogEventEnricher
+    public class HttpRequestClientHostNameEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestIdPropertyName = "HttpRequestId";
+        public const string HttpRequestClientHostNamePropertyName = "HttpRequestClientHostName";
 
-        static readonly string RequestIdItemName = typeof(HttpRequestIdEnricher).Name + "+RequestId";
+        #region Implementation of ILogEventEnricher
 
         /// <summary>
-        /// Enrich the log event with an id assigned to the currently-executing HTTP request, if any.
+        /// Enrich the log event.
         /// </summary>
         /// <param name="logEvent">The log event to enrich.</param>
         /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
@@ -43,15 +43,17 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            Guid requestId;
-            var requestIdItem = HttpContext.Current.Items[RequestIdItemName];
-            if (requestIdItem == null)
-                HttpContext.Current.Items[RequestIdItemName] = requestId = Guid.NewGuid();
-            else
-                requestId = (Guid)requestIdItem;
+            if (HttpContext.Current.Request == null)
+                return;
 
-            var requestIdProperty = new LogEventProperty(HttpRequestIdPropertyName, new ScalarValue(requestId));
-            logEvent.AddPropertyIfAbsent(requestIdProperty);
+            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.UserHostName))
+                return;
+            
+            var userHostName = HttpContext.Current.Request.UserHostName;
+            var httpRequestClientHostnameProperty = new LogEventProperty(HttpRequestClientHostNamePropertyName, new ScalarValue(userHostName));
+            logEvent.AddPropertyIfAbsent(httpRequestClientHostnameProperty);
         }
+
+        #endregion
     }
 }

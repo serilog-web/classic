@@ -13,29 +13,26 @@
 // limitations under the License.
 
 using System;
-using System.Threading;
 using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with a HttpRequestNumber unique within the current
-    /// logging session.
+    /// Enrich log events with a HttpRequestTraceId GUID matching the
+    /// RequestTraceIdentifier assigned by IIS and used throughout
+    /// ASP.NET/ETW. IIS ETW tracing must be enabled for this to work.
     /// </summary>
-    public class HttpRequestNumberEnricher : ILogEventEnricher
+    public class HttpRequestTraceIdEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestNumberPropertyName = "HttpRequestNumber";
-
-        static int LastRequestNumber;
-        static readonly string RequestNumberItemName = typeof(HttpRequestNumberEnricher).Name + "+RequestNumber";
+        public const string HttpRequestTraceIdPropertyName = "HttpRequestTraceId";
 
         /// <summary>
-        /// Enrich the log event with the number assigned to the currently-executing HTTP request, if any.
+        /// Enrich the log event with an id assigned to the currently-executing HTTP request, if any.
         /// </summary>
         /// <param name="logEvent">The log event to enrich.</param>
         /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
@@ -46,15 +43,12 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            int requestNumber;
-            var requestNumberItem = HttpContext.Current.Items[RequestNumberItemName];
-            if (requestNumberItem == null)
-                HttpContext.Current.Items[RequestNumberItemName] = requestNumber = Interlocked.Increment(ref LastRequestNumber);
-            else
-                requestNumber = (int)requestNumberItem;
+            var serviceProvider = (IServiceProvider)HttpContext.Current;
+            var workerRequest = (HttpWorkerRequest)serviceProvider.GetService(typeof(HttpWorkerRequest));
+            var requestId = workerRequest.RequestTraceIdentifier;
 
-            var requestNumberProperty = new LogEventProperty(HttpRequestNumberPropertyName, new ScalarValue(requestNumber));
-            logEvent.AddPropertyIfAbsent(requestNumberProperty);
+            var requestIdProperty = new LogEventProperty(HttpRequestTraceIdPropertyName, new ScalarValue(requestId));
+            logEvent.AddPropertyIfAbsent(requestIdProperty);
         }
     }
 }

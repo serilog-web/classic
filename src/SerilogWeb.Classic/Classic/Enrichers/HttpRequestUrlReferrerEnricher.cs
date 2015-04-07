@@ -1,4 +1,4 @@
-﻿// Copyright 2014 Serilog Contributors
+// Copyright 2014 Serilog Contributors
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,22 +17,22 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with a HttpRequestTraceId GUID matching the
-    /// RequestTraceIdentifier assigned by IIS and used throughout
-    /// ASP.NET/ETW. IIS ETW tracing must be enabled for this to work.
+    /// Enrich log events with the Url of the Referrer.
     /// </summary>
-    public class HttpRequestTraceIdEnricher : ILogEventEnricher
+    public class HttpRequestUrlReferrerEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestTraceIdPropertyName = "HttpRequestTraceId";
+        public const string HttpRequestUrlReferrerPropertyName = "HttpRequestUrlReferrer";
+
+        #region Implementation of ILogEventEnricher
 
         /// <summary>
-        /// Enrich the log event with an id assigned to the currently-executing HTTP request, if any.
+        /// Enrich the log event.
         /// </summary>
         /// <param name="logEvent">The log event to enrich.</param>
         /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
@@ -43,12 +43,17 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            var serviceProvider = (IServiceProvider)HttpContext.Current;
-            var workerRequest = (HttpWorkerRequest)serviceProvider.GetService(typeof(HttpWorkerRequest));
-            var requestId = workerRequest.RequestTraceIdentifier;
+            if (HttpContext.Current.Request == null)
+                return;
 
-            var requestIdProperty = new LogEventProperty(HttpRequestTraceIdPropertyName, new ScalarValue(requestId));
-            logEvent.AddPropertyIfAbsent(requestIdProperty);
+            if (HttpContext.Current.Request.UrlReferrer == null)
+                return;
+
+            var requestUrlReferrer = HttpContext.Current.Request.UrlReferrer.ToString();
+            var httpRequestUrlReferrerProperty = new LogEventProperty(HttpRequestUrlReferrerPropertyName, new ScalarValue(requestUrlReferrer));
+            logEvent.AddPropertyIfAbsent(httpRequestUrlReferrerProperty);
         }
+
+        #endregion
     }
 }

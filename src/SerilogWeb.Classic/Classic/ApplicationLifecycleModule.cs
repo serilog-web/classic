@@ -15,9 +15,10 @@
 using System;
 using System.Linq;
 using System.Web;
+using Serilog;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web
+namespace SerilogWeb.Classic
 {
     /// <summary>
     /// HTTP module that logs application request and error events.

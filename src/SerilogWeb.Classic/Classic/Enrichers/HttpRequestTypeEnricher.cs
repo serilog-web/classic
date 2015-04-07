@@ -17,17 +17,17 @@ using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with the Url of the Referrer.
+    /// Enrich log events with the HTTP Request Type.
     /// </summary>
-    public class HttpRequestUrlReferrerEnricher : ILogEventEnricher
+    public class HttpRequestTypeEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestUrlReferrerPropertyName = "HttpRequestUrlReferrer";
+        public const string HttpRequestTypePropertyName = "HttpRequestType";
 
         #region Implementation of ILogEventEnricher
 
@@ -46,12 +46,12 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current.Request == null)
                 return;
 
-            if (HttpContext.Current.Request.UrlReferrer == null)
+            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.RequestType))
                 return;
 
-            var requestUrlReferrer = HttpContext.Current.Request.UrlReferrer.ToString();
-            var httpRequestUrlReferrerProperty = new LogEventProperty(HttpRequestUrlReferrerPropertyName, new ScalarValue(requestUrlReferrer));
-            logEvent.AddPropertyIfAbsent(httpRequestUrlReferrerProperty);
+            var requestType = HttpContext.Current.Request.RequestType;
+            var httpRequestTypeProperty = new LogEventProperty(HttpRequestTypePropertyName, new ScalarValue(requestType));
+            logEvent.AddPropertyIfAbsent(httpRequestTypeProperty);
         }
 
         #endregion

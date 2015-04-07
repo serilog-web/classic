@@ -1,4 +1,4 @@
-// Copyright 2014 Serilog Contributors
+﻿// Copyright 2014 Serilog Contributors
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,26 +13,29 @@
 // limitations under the License.
 
 using System;
+using System.Threading;
 using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Serilog.Extras.Web.Enrichers
+namespace SerilogWeb.Classic.Enrichers
 {
     /// <summary>
-    /// Enrich log events with the Client Host Name.
+    /// Enrich log events with a HttpRequestNumber unique within the current
+    /// logging session.
     /// </summary>
-    public class HttpRequestClientHostNameEnricher : ILogEventEnricher
+    public class HttpRequestNumberEnricher : ILogEventEnricher
     {
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
-        public const string HttpRequestClientHostNamePropertyName = "HttpRequestClientHostName";
+        public const string HttpRequestNumberPropertyName = "HttpRequestNumber";
 
-        #region Implementation of ILogEventEnricher
+        static int LastRequestNumber;
+        static readonly string RequestNumberItemName = typeof(HttpRequestNumberEnricher).Name + "+RequestNumber";
 
         /// <summary>
-        /// Enrich the log event.
+        /// Enrich the log event with the number assigned to the currently-executing HTTP request, if any.
         /// </summary>
         /// <param name="logEvent">The log event to enrich.</param>
         /// <param name="propertyFactory">Factory for creating new properties to add to the event.</param>
@@ -43,17 +46,15 @@ namespace Serilog.Extras.Web.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContext.Current.Request == null)
-                return;
+            int requestNumber;
+            var requestNumberItem = HttpContext.Current.Items[RequestNumberItemName];
+            if (requestNumberItem == null)
+                HttpContext.Current.Items[RequestNumberItemName] = requestNumber = Interlocked.Increment(ref LastRequestNumber);
+            else
+                requestNumber = (int)requestNumberItem;
 
-            if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.UserHostName))
-                return;
-            
-            var userHostName = HttpContext.Current.Request.UserHostName;
-            var httpRequestClientHostnameProperty = new LogEventProperty(HttpRequestClientHostNamePropertyName, new ScalarValue(userHostName));
-            logEvent.AddPropertyIfAbsent(httpRequestClientHostnameProperty);
+            var requestNumberProperty = new LogEventProperty(HttpRequestNumberPropertyName, new ScalarValue(requestNumber));
+            logEvent.AddPropertyIfAbsent(requestNumberProperty);
         }
-
-        #endregion
     }
 }
