@@ -29,6 +29,28 @@ namespace SerilogWeb.Classic
         static volatile bool _isEnabled = true;
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
 
+        static volatile ILogger _logger;
+
+        /// <summary>
+        /// The globally-shared logger.
+        /// 
+        /// </summary>
+        /// <exception cref="T:System.ArgumentNullException"/>
+        public static ILogger Logger
+        {
+            get
+            {
+                return _logger ?? Log.Logger;
+            }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException("value");
+
+                _logger = value;
+            }
+        }
+
         /// <summary>
         /// Register the module with the application (called automatically;
         /// do not call this explicitly from your code).
@@ -74,7 +96,7 @@ namespace SerilogWeb.Classic
         /// <param name="context">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
         public void Init(HttpApplication context)
         {
-            context.LogRequest +=LogRequest;
+            context.LogRequest += LogRequest;
             context.Error += Error;
         }
 
@@ -83,14 +105,14 @@ namespace SerilogWeb.Classic
             if (!_isEnabled) return;
 
             var request = HttpContext.Current.Request;
-            Log.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
-            if (_logPostedFormData && Log.IsEnabled(LogEventLevel.Debug))
+            Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
+            if (_logPostedFormData && Logger.IsEnabled(LogEventLevel.Debug))
             {
                 var form = request.Form;
                 if (form.HasKeys())
                 {
                     var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = v }));
-                    Log.Debug("Client provided {@FormData}", formData);
+                    Logger.Debug("Client provided {@FormData}", formData);
                 }
             }
         }
@@ -100,7 +122,7 @@ namespace SerilogWeb.Classic
             if (!_isEnabled) return;
 
             var ex = ((HttpApplication)sender).Server.GetLastError();
-            Log.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
+            Logger.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
         }
 
         /// <summary>
