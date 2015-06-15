@@ -27,6 +27,7 @@ namespace SerilogWeb.Classic
     {
         static volatile bool _logPostedFormData;
         static volatile bool _isEnabled = true;
+        static volatile bool _filterPasswordsInFormData = true;
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
 
         /// <summary>
@@ -47,6 +48,16 @@ namespace SerilogWeb.Classic
         {
             get { return _logPostedFormData; }
             set { _logPostedFormData = value; }
+        }
+
+        /// <summary>
+        /// When set to true (the default), any field containing password will 
+        /// not have its value logged when DebugLogPostedFormData is enabled
+        /// </summary>
+        public static bool FilterPasswordsInFormData
+        {
+            get { return _filterPasswordsInFormData; }
+            set { _filterPasswordsInFormData = value; }
         }
 
         /// <summary>
@@ -89,10 +100,24 @@ namespace SerilogWeb.Classic
                 var form = request.Form;
                 if (form.HasKeys())
                 {
-                    var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = v }));
+                    var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
                     Log.Debug("Client provided {@FormData}", formData);
                 }
             }
+        }
+
+        /// <summary>
+        /// Filters a password from being logged
+        /// </summary>
+        /// <param name="key">Key of the pair</param>
+        /// <param name="value">Value of the pair</param>
+        static string FilterPasswords(string key, string value)
+        {
+            if (_filterPasswordsInFormData && key.IndexOf("password", StringComparison.OrdinalIgnoreCase) != -1)
+            {
+                return "********";
+            }
+            return value;
         }
 
         static void Error(object sender, EventArgs e)
