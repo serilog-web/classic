@@ -25,9 +25,10 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        static volatile bool _logPostedFormData;
+        static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static volatile bool _isEnabled = true;
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
+        static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
 
         /// <summary>
         /// Register the module with the application (called automatically;
@@ -39,11 +40,13 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
-        /// When set to true, form data will be written via a debug-level event.
-        /// The default is false. Requires that <see cref="IsEnabled"/> is also
+        /// When set to Always, form data will be written via an event (using
+        /// severity from FormDataLoggingLevel).  When set to OnlyOnError, this
+        /// will only be written if the Response has a 500 status.
+        /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
         /// </summary>
-        public static bool DebugLogPostedFormData
+        public static LogPostedFormDataOption LogPostedFormData
         {
             get { return _logPostedFormData; }
             set { _logPostedFormData = value; }
@@ -68,6 +71,16 @@ namespace SerilogWeb.Classic
             set { _requestLoggingLevel = value; }
         }
 
+
+        /// <summary>
+        /// The level at which to log form values
+        /// </summary>
+        public static LogEventLevel FormDataLoggingLevel
+        {
+            get { return _formDataLoggingLevel; }
+            set { _formDataLoggingLevel = value; }
+        }
+
         /// <summary>
         /// Initializes a module and prepares it to handle requests.
         /// </summary>
@@ -84,15 +97,22 @@ namespace SerilogWeb.Classic
 
             var request = HttpContext.Current.Request;
             Log.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
-            if (_logPostedFormData && Log.IsEnabled(LogEventLevel.Debug))
+            if (ShouldLogRequest())
             {
                 var form = request.Form;
                 if (form.HasKeys())
                 {
                     var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = v }));
-                    Log.Debug("Client provided {@FormData}", formData);
+                    Log.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
                 }
             }
+        }
+
+        static bool ShouldLogRequest()
+        {
+            return Log.IsEnabled(_formDataLoggingLevel) 
+                && (LogPostedFormData == LogPostedFormDataOption.Always
+                || (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
         }
 
         static void Error(object sender, EventArgs e)
