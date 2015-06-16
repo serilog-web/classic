@@ -40,8 +40,12 @@ When an unhandled exception occurs, the module will capture it and log it as an 
 To enable the posting of form data:
 
 ```
-ApplicationLifecycleModule.DebugLogPostedFormData = true;
+ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+// or
+ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnlyOnError;
 ```
+
+Any fields containing the phrase 'password' will be filtered from the logged form data.  This can be disabled with `ApplicationLifecycleModule.FilterPasswordsInFormData = false`.
 
 If you want to disable the logging completely, use the following statement:
 
