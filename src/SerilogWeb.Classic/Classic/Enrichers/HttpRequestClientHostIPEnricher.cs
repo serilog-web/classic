@@ -69,8 +69,19 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContext.Current == null)
                 return;
 
+            try
+            {
             if (HttpContext.Current.Request == null)
                 return;
+            }
+            catch (HttpException ex)
+            {
+              if (ex.Message.Equals("Request is not available in this context") || ex.ErrorCode == -2147467259)
+              {
+                // Expect this with ASP.NET integrated pipeline
+                return;
+              }
+            }
 
             if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.UserHostAddress))
                 return;
