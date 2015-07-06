@@ -57,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classic\ApplicationLifecycleModule.cs" />
+    <Compile Include="Classic\Enrichers\HttpContextCurrent.cs" />
     <Compile Include="Classic\Enrichers\HttpRequestClientHostIPEnricher.cs" />
     <Compile Include="Classic\Enrichers\HttpRequestClientHostNameEnricher.cs" />
     <Compile Include="Classic\Enrichers\HttpRequestIdEnricher.cs" />
