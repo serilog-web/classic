@@ -17,6 +17,7 @@ using System.Linq;
 using System.Web;
 using Serilog;
 using Serilog.Events;
+using SerilogWeb.Classic.Enrichers;
 
 namespace SerilogWeb.Classic
 {
@@ -128,7 +129,7 @@ namespace SerilogWeb.Classic
         {
             if (!_isEnabled) return;
 
-            var request = HttpContext.Current.Request;
+            var request = HttpContextCurrent.Request;
             Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
             if (ShouldLogRequest())
             {
