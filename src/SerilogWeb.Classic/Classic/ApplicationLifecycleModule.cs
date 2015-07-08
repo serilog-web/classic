@@ -130,6 +130,9 @@ namespace SerilogWeb.Classic
             if (!_isEnabled) return;
 
             var request = HttpContextCurrent.Request;
+            if (request == null)
+                return;
+
             Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
             if (ShouldLogRequest())
             {

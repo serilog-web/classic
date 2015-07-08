@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>SerilogWeb.Classic</id>
-    <version>2.0.3-private2</version>
+    <version>$version$</version>
     <authors>SerilogWeb Contributors, Serilog Contributors</authors>
     <description>Logs details of System.Web HTTP requests through Serilog.</description>
     <language>en-US</language>
