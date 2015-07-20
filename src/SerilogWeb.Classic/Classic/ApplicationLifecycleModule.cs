@@ -136,7 +136,7 @@ namespace SerilogWeb.Classic
             Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
             if (ShouldLogRequest())
             {
-                var form = request.Form;
+                var form = request.Unvalidated.Form;
                 if (form.HasKeys())
                 {
                     var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
