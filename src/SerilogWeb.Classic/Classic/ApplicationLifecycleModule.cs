@@ -18,6 +18,7 @@ using System.Web;
 using Serilog;
 using Serilog.Events;
 using SerilogWeb.Classic.Enrichers;
+using System.Collections.Generic;
 
 namespace SerilogWeb.Classic
 {
@@ -29,6 +30,7 @@ namespace SerilogWeb.Classic
         static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static volatile bool _isEnabled = true;
         static volatile bool _filterPasswordsInFormData = true;
+        static volatile IEnumerable<String> _filteredKeywords = new[] { "password" };
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
         static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
 
@@ -84,6 +86,16 @@ namespace SerilogWeb.Classic
         {
             get { return _filterPasswordsInFormData; }
             set { _filterPasswordsInFormData = value; }
+        }
+
+        /// <summary>
+        /// When FilterPasswordsInFormData is true, any field containing keywords in this list will 
+        /// not have its value logged when DebugLogPostedFormData is enabled
+        /// </summary>
+        public static IEnumerable<String> FilteredKeywordsInFormData
+        {
+            get { return _filteredKeywords; }
+            set { _filteredKeywords = value; }
         }
 
         /// <summary>
@@ -153,16 +165,17 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
-        /// Filters a password from being logged
+        /// Filters configured keywords from being logged
         /// </summary>
         /// <param name="key">Key of the pair</param>
         /// <param name="value">Value of the pair</param>
         static string FilterPasswords(string key, string value)
         {
-            if (_filterPasswordsInFormData && key.IndexOf("password", StringComparison.OrdinalIgnoreCase) != -1)
+            if (_filterPasswordsInFormData && _filteredKeywords.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
             {
                 return "********";
             }
+
             return value;
         }
 
