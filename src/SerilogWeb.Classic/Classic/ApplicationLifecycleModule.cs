@@ -155,7 +155,7 @@ namespace SerilogWeb.Classic
 
                 Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl} [{ElapsedMillseconds}ms]", request.HttpMethod, request.RawUrl, stopwatch.ElapsedMilliseconds);
 
-                if (ShouldLogRequest())
+                if (ShouldLogFormData())
                 {
                     var form = request.Unvalidated.Form;
 
@@ -170,7 +170,7 @@ namespace SerilogWeb.Classic
             context.Error += Error;
         }
 
-        static bool ShouldLogRequest()
+        static bool ShouldLogFormData()
         {
             return Logger.IsEnabled(_formDataLoggingLevel) 
                 && (LogPostedFormData == LogPostedFormDataOption.Always
