@@ -19,6 +19,7 @@ using Serilog;
 using Serilog.Events;
 using SerilogWeb.Classic.Enrichers;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace SerilogWeb.Classic
 {
@@ -27,6 +28,8 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
+        private const String StopWatchKey = "stopWatchContextKey";
+
         static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static volatile bool _isEnabled = true;
         static volatile bool _filterPasswordsInFormData = true;
@@ -133,28 +136,38 @@ namespace SerilogWeb.Classic
         /// <param name="context">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
         public void Init(HttpApplication context)
         {
-            context.LogRequest += LogRequest;
-            context.Error += Error;
-        }
-
-        static void LogRequest(object sender, EventArgs e)
-        {
-            if (!_isEnabled) return;
-
-            var request = HttpContextCurrent.Request;
-            if (request == null)
-                return;
-
-            Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
-            if (ShouldLogRequest())
+            context.BeginRequest += (o, args) =>
             {
-                var form = request.Unvalidated.Form;
-                if (form.HasKeys())
+                context.Context.Items[StopWatchKey] = Stopwatch.StartNew();
+            };
+
+            context.EndRequest += (o, args) =>
+            {
+                Stopwatch stopwatch = (Stopwatch)context.Context.Items[StopWatchKey]; ;
+
+                stopwatch.Stop();
+
+                if (!_isEnabled) return;
+
+                var request = HttpContextCurrent.Request;
+                if (request == null)
+                    return;
+
+                Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
+
+                if (ShouldLogRequest())
                 {
-                    var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
-                    Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
+                    var form = request.Unvalidated.Form;
+
+                    if (form.HasKeys())
+                    {
+                        var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
+                        Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
+                    }
                 }
-            }
+            };
+
+            context.Error += Error;
         }
 
         static bool ShouldLogRequest()
