@@ -153,7 +153,7 @@ namespace SerilogWeb.Classic
                 if (request == null)
                     return;
 
-                Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
+                Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl} [{ElapsedMillseconds}ms]", request.HttpMethod, request.RawUrl, stopwatch.ElapsedMilliseconds);
 
                 if (ShouldLogRequest())
                 {
