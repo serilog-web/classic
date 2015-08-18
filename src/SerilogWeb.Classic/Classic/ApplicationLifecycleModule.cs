@@ -45,7 +45,7 @@ namespace SerilogWeb.Classic
         {
             get
             {
-                return _logger ?? Log.Logger.ForContext<ApplicationLifecycleModule>();
+                return (_logger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
             }
             set
             {
