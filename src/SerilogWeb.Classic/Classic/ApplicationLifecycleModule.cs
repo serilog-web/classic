@@ -136,38 +136,49 @@ namespace SerilogWeb.Classic
         /// <param name="context">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
         public void Init(HttpApplication context)
         {
-            context.BeginRequest += (o, args) =>
+            context.BeginRequest += (sender, args) =>
             {
-                context.Context.Items[StopWatchKey] = Stopwatch.StartNew();
+                if(_isEnabled)
+                {
+                    context.Context.Items[StopWatchKey] = Stopwatch.StartNew();
+                }                
             };
 
-            context.EndRequest += (o, args) =>
+            context.EndRequest += (sender, args) =>
             {
-                Stopwatch stopwatch = (Stopwatch)context.Context.Items[StopWatchKey]; ;
-
-                stopwatch.Stop();
-
-                if (!_isEnabled) return;
-
-                var request = HttpContextCurrent.Request;
-                if (request == null)
-                    return;
-
-                Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl} [{ElapsedMillseconds}ms]", request.HttpMethod, request.RawUrl, stopwatch.ElapsedMilliseconds);
-
-                if (ShouldLogFormData())
+                if (_isEnabled)
                 {
-                    var form = request.Unvalidated.Form;
+                    Stopwatch stopwatch = (Stopwatch)context.Context.Items[StopWatchKey];
 
-                    if (form.HasKeys())
+                    stopwatch.Stop();
+
+                    var request = HttpContextCurrent.Request;
+                    if (request == null)
+                        return;
+
+                    Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl} [{ElapsedMillseconds}ms]", request.HttpMethod, request.RawUrl, stopwatch.ElapsedMilliseconds);
+
+                    if (ShouldLogFormData())
                     {
-                        var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
-                        Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
+                        var form = request.Unvalidated.Form;
+
+                        if (form.HasKeys())
+                        {
+                            var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
+                            Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
+                        }
                     }
+                }                
+            };
+
+            context.Error += (sender, args) =>
+            {
+                if (_isEnabled)
+                {
+                    var ex = ((HttpApplication)sender).Server.GetLastError();
+                    Logger.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
                 }
             };
-
-            context.Error += Error;
         }
 
         static bool ShouldLogFormData()
@@ -190,14 +201,6 @@ namespace SerilogWeb.Classic
             }
 
             return value;
-        }
-
-        static void Error(object sender, EventArgs e)
-        {
-            if (!_isEnabled) return;
-
-            var ex = ((HttpApplication)sender).Server.GetLastError();
-            Logger.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
         }
 
         /// <summary>
