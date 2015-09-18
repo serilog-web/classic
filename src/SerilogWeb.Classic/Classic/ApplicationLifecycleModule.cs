@@ -28,7 +28,7 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        private const String StopWatchKey = "stopWatchContextKey";
+        private const String StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
 
         static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static volatile bool _isEnabled = true;
