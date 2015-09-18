@@ -156,7 +156,11 @@ namespace SerilogWeb.Classic
                     if (request == null)
                         return;
 
-                    Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl} [{ElapsedMillseconds}ms]", request.HttpMethod, request.RawUrl, stopwatch.ElapsedMilliseconds);
+                    Logger.Write(_requestLoggingLevel, "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
+                        request.HttpMethod, 
+                        request.RawUrl, 
+                        HttpContext.Current.Response.StatusCode, 
+                        stopwatch.ElapsedMilliseconds);
 
                     if (ShouldLogFormData())
                     {
