@@ -138,7 +138,7 @@ namespace SerilogWeb.Classic
         {
             context.BeginRequest += (sender, args) =>
             {
-                if(_isEnabled)
+                if(_isEnabled && context.Context != null)
                 {
                     context.Context.Items[StopWatchKey] = Stopwatch.StartNew();
                 }                
@@ -146,7 +146,7 @@ namespace SerilogWeb.Classic
 
             context.EndRequest += (sender, args) =>
             {
-                if (_isEnabled)
+                if (_isEnabled && context.Context != null)
                 {
                     Stopwatch stopwatch = (Stopwatch)context.Context.Items[StopWatchKey];
 
@@ -159,7 +159,7 @@ namespace SerilogWeb.Classic
                     Logger.Write(_requestLoggingLevel, "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
                         request.HttpMethod, 
                         request.RawUrl, 
-                        HttpContext.Current.Response.StatusCode, 
+                        context.Response.StatusCode, 
                         stopwatch.ElapsedMilliseconds);
 
                     if (ShouldLogFormData())
