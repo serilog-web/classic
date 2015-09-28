@@ -133,22 +133,22 @@ namespace SerilogWeb.Classic
         /// <summary>
         /// Initializes a module and prepares it to handle requests.
         /// </summary>
-        /// <param name="context">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
-        public void Init(HttpApplication context)
+        /// <param name="application">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
+        public void Init(HttpApplication application)
         {
-            context.BeginRequest += (sender, args) =>
+            application.BeginRequest += (sender, args) =>
             {
-                if(_isEnabled && context.Context != null)
+                if(_isEnabled && application.Context != null)
                 {
-                    context.Context.Items[StopWatchKey] = Stopwatch.StartNew();
+                    application.Context.Items[StopWatchKey] = Stopwatch.StartNew();
                 }                
             };
 
-            context.EndRequest += (sender, args) =>
+            application.EndRequest += (sender, args) =>
             {
-                if (_isEnabled && context.Context != null)
+                if (_isEnabled && application.Context != null)
                 {
-                    Stopwatch stopwatch = (Stopwatch)context.Context.Items[StopWatchKey];
+                    Stopwatch stopwatch = (Stopwatch)application.Context.Items[StopWatchKey];
 
                     stopwatch.Stop();
 
@@ -159,7 +159,7 @@ namespace SerilogWeb.Classic
                     Logger.Write(_requestLoggingLevel, "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
                         request.HttpMethod, 
                         request.RawUrl, 
-                        context.Response.StatusCode, 
+                        application.Response.StatusCode, 
                         stopwatch.ElapsedMilliseconds);
 
                     if (ShouldLogFormData())
@@ -175,7 +175,7 @@ namespace SerilogWeb.Classic
                 }                
             };
 
-            context.Error += (sender, args) =>
+            application.Error += (sender, args) =>
             {
                 if (_isEnabled)
                 {
