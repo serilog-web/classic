@@ -28,12 +28,12 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        private const String StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
+        private const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
 
         static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static volatile bool _isEnabled = true;
         static volatile bool _filterPasswordsInFormData = true;
-        static volatile IEnumerable<String> _filteredKeywords = new[] { "password" };
+        static volatile IEnumerable<string> _filteredKeywords = new[] { "password" };
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
         static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
 
@@ -53,7 +53,7 @@ namespace SerilogWeb.Classic
             set
             {
                 if (value == null)
-                    throw new ArgumentNullException("value");
+                    throw new ArgumentNullException(nameof(value));
 
                 _logger = value;
             }
@@ -144,12 +144,11 @@ namespace SerilogWeb.Classic
                 }                
             };
 
-            application.EndRequest += (sender, args) =>
+            application.LogRequest += (sender, args) =>
             {
                 if (_isEnabled && application.Context != null)
                 {
-                    var stopwatch = (Stopwatch)application.Context.Items[StopWatchKey];
-
+                    var stopwatch = application.Context.Items[StopWatchKey] as Stopwatch;
                     if (stopwatch == null)
                         return;
 
@@ -159,41 +158,35 @@ namespace SerilogWeb.Classic
                     if (request == null)
                         return;
 
-                    Logger.Write(_requestLoggingLevel, "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
+                    var error = application.Server.GetLastError();
+                    var level = error != null ? LogEventLevel.Error : _requestLoggingLevel;
+
+                    var logger = Logger;
+                    if (ShouldLogFormData)
+                    {
+                        var form = request.Unvalidated.Form;
+                        if (form.HasKeys())
+                        {
+                            var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
+                            logger = logger.ForContext("FormData", formData, true);
+                        }
+                    }
+
+                    logger.Write(
+                        level,
+                        error,
+                        "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
                         request.HttpMethod, 
                         request.RawUrl, 
                         application.Response.StatusCode, 
                         stopwatch.ElapsedMilliseconds);
-
-                    if (ShouldLogFormData())
-                    {
-                        var form = request.Unvalidated.Form;
-
-                        if (form.HasKeys())
-                        {
-                            var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
-                            Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
-                        }
-                    }
                 }                
             };
-
-            application.Error += (sender, args) =>
-            {
-                if (_isEnabled)
-                {
-                    var ex = ((HttpApplication)sender).Server.GetLastError();
-                    Logger.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
-                }
-            };
         }
 
-        static bool ShouldLogFormData()
-        {
-            return Logger.IsEnabled(_formDataLoggingLevel) 
-                && (LogPostedFormData == LogPostedFormDataOption.Always
-                || (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
-        }
+        static bool ShouldLogFormData => Logger.IsEnabled(_formDataLoggingLevel) &&
+            (LogPostedFormData == LogPostedFormDataOption.Always ||
+                (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
 
         /// <summary>
         /// Filters configured keywords from being logged

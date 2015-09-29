@@ -5,7 +5,11 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerilogWeb.Classic", "src\SerilogWeb.Classic\SerilogWeb.Classic.csproj", "{13CEC8DD-6087-4FEE-AEC1-0511B8959CCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeriLogWeb.Test", "src\SeriLogWeb.Test\SeriLogWeb.Test.csproj", "{E48F5A8D-0CBD-4AFF-A692-99A79D2DAD21}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1FBD9562-CE19-4685-B6D5-B99E8835B2F0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{96517C33-6397-45A0-9534-C8D9D25CF5C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SerilogWeb.Test", "test\SerilogWeb.Test\SerilogWeb.Test.csproj", "{E48F5A8D-0CBD-4AFF-A692-99A79D2DAD21}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +28,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{13CEC8DD-6087-4FEE-AEC1-0511B8959CCD} = {1FBD9562-CE19-4685-B6D5-B99E8835B2F0}
+		{E48F5A8D-0CBD-4AFF-A692-99A79D2DAD21} = {96517C33-6397-45A0-9534-C8D9D25CF5C4}
 	EndGlobalSection
 EndGlobal
