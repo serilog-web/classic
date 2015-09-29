@@ -148,7 +148,10 @@ namespace SerilogWeb.Classic
             {
                 if (_isEnabled && application.Context != null)
                 {
-                    Stopwatch stopwatch = (Stopwatch)application.Context.Items[StopWatchKey];
+                    var stopwatch = (Stopwatch)application.Context.Items[StopWatchKey];
+
+                    if (stopwatch == null)
+                        return;
 
                     stopwatch.Stop();
 
