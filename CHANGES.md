@@ -1,3 +1,7 @@
+2.0.6
+ * #16 - include response times in events
+ * #22 - unify end-request, error and `FormData` log events
+
 2.0.5
  * #18 - tag events with source context
 
