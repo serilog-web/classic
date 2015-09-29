@@ -7,7 +7,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SeriLogWeb.Test
+namespace SerilogWeb.Test
 {
 
 
