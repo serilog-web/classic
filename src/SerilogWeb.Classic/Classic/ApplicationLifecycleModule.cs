@@ -19,6 +19,7 @@ using Serilog;
 using Serilog.Events;
 using SerilogWeb.Classic.Enrichers;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace SerilogWeb.Classic
 {
@@ -27,6 +28,8 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
+        private const String StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
+
         static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static volatile bool _isEnabled = true;
         static volatile bool _filterPasswordsInFormData = true;
@@ -130,34 +133,62 @@ namespace SerilogWeb.Classic
         /// <summary>
         /// Initializes a module and prepares it to handle requests.
         /// </summary>
-        /// <param name="context">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
-        public void Init(HttpApplication context)
+        /// <param name="application">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
+        public void Init(HttpApplication application)
         {
-            context.LogRequest += LogRequest;
-            context.Error += Error;
-        }
-
-        static void LogRequest(object sender, EventArgs e)
-        {
-            if (!_isEnabled) return;
-
-            var request = HttpContextCurrent.Request;
-            if (request == null)
-                return;
-
-            Logger.Write(_requestLoggingLevel, "HTTP {Method} for {RawUrl}", request.HttpMethod, request.RawUrl);
-            if (ShouldLogRequest())
+            application.BeginRequest += (sender, args) =>
             {
-                var form = request.Unvalidated.Form;
-                if (form.HasKeys())
+                if(_isEnabled && application.Context != null)
                 {
-                    var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
-                    Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
+                    application.Context.Items[StopWatchKey] = Stopwatch.StartNew();
+                }                
+            };
+
+            application.EndRequest += (sender, args) =>
+            {
+                if (_isEnabled && application.Context != null)
+                {
+                    var stopwatch = (Stopwatch)application.Context.Items[StopWatchKey];
+
+                    if (stopwatch == null)
+                        return;
+
+                    stopwatch.Stop();
+
+                    var request = HttpContextCurrent.Request;
+                    if (request == null)
+                        return;
+
+                    Logger.Write(_requestLoggingLevel, "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
+                        request.HttpMethod, 
+                        request.RawUrl, 
+                        application.Response.StatusCode, 
+                        stopwatch.ElapsedMilliseconds);
+
+                    if (ShouldLogFormData())
+                    {
+                        var form = request.Unvalidated.Form;
+
+                        if (form.HasKeys())
+                        {
+                            var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
+                            Logger.Write(_formDataLoggingLevel, "Client provided {@FormData}", formData);
+                        }
+                    }
+                }                
+            };
+
+            application.Error += (sender, args) =>
+            {
+                if (_isEnabled)
+                {
+                    var ex = ((HttpApplication)sender).Server.GetLastError();
+                    Logger.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
                 }
-            }
+            };
         }
 
-        static bool ShouldLogRequest()
+        static bool ShouldLogFormData()
         {
             return Logger.IsEnabled(_formDataLoggingLevel) 
                 && (LogPostedFormData == LogPostedFormDataOption.Always
@@ -177,14 +208,6 @@ namespace SerilogWeb.Classic
             }
 
             return value;
-        }
-
-        static void Error(object sender, EventArgs e)
-        {
-            if (!_isEnabled) return;
-
-            var ex = ((HttpApplication)sender).Server.GetLastError();
-            Logger.Error(ex, "Error caught in global handler: {ExceptionMessage}", ex.Message);
         }
 
         /// <summary>
