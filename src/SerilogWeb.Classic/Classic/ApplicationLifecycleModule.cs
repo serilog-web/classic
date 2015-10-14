@@ -37,6 +37,11 @@ namespace SerilogWeb.Classic
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
         static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
 
+        #pragma warning disable 612 // allow obsolete call to keep backwards compatability
+        static volatile Func<HttpContext, bool> _shouldLogPostedFormData = context => (LogPostedFormData == LogPostedFormDataOption.Always ||
+            (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
+        #pragma warning restore 612
+
         static volatile ILogger _logger;
 
         /// <summary>
@@ -75,6 +80,11 @@ namespace SerilogWeb.Classic
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
         /// </summary>
+        /// <remarks>
+        /// Obsolete. Use <see cref="ShouldLogPostedFormData"/> to configure
+        /// when to log posted form data
+        /// </remarks>
+        [Obsolete]
         public static LogPostedFormDataOption LogPostedFormData
         {
             get { return _logPostedFormData; }
@@ -131,6 +141,16 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
+        /// The function used to determine if posted form data should be logged.
+        /// </summary>
+        /// <remarks>If set the LogPostedFormData value will be ignored </remarks>
+        public static Func<HttpContext, bool> ShouldLogPostedFormData
+        {
+            get { return _shouldLogPostedFormData; }
+            set { _shouldLogPostedFormData = value; }
+        }
+
+        /// <summary>
         /// Initializes a module and prepares it to handle requests.
         /// </summary>
         /// <param name="application">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
@@ -162,7 +182,7 @@ namespace SerilogWeb.Classic
                     var level = error != null ? LogEventLevel.Error : _requestLoggingLevel;
 
                     var logger = Logger;
-                    if (ShouldLogFormData)
+                    if (logger.IsEnabled(_formDataLoggingLevel) && ShouldLogPostedFormData(HttpContext.Current))
                     {
                         var form = request.Unvalidated.Form;
                         if (form.HasKeys())
@@ -183,10 +203,6 @@ namespace SerilogWeb.Classic
                 }                
             };
         }
-
-        static bool ShouldLogFormData => Logger.IsEnabled(_formDataLoggingLevel) &&
-            (LogPostedFormData == LogPostedFormDataOption.Always ||
-                (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
 
         /// <summary>
         /// Filters configured keywords from being logged
