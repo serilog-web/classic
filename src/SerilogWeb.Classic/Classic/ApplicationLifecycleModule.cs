@@ -147,7 +147,13 @@ namespace SerilogWeb.Classic
         public static Func<HttpContext, bool> ShouldLogPostedFormData
         {
             get { return _shouldLogPostedFormData; }
-            set { _shouldLogPostedFormData = value; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                _shouldLogPostedFormData = value;
+            }
         }
 
         /// <summary>
