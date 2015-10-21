@@ -39,7 +39,7 @@ namespace SerilogWeb.Classic
 
         #pragma warning disable 612 // allow obsolete call to keep backwards compatability
         static volatile Func<HttpContext, bool> _shouldLogPostedFormData = context => (LogPostedFormData == LogPostedFormDataOption.Always ||
-            (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
+            (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && context.Response.StatusCode >= 500));
         #pragma warning restore 612
 
         static volatile ILogger _logger;
