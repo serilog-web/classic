@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections;
 using System.Linq;
 using System.Web;
 using Serilog;
@@ -36,6 +37,7 @@ namespace SerilogWeb.Classic
         static volatile IEnumerable<string> _filteredKeywords = new[] { "password" };
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
         static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
+        static volatile IList<Func<HttpContext, bool>> _requestPredicates = new List<Func<HttpContext, bool>>();
 
         static volatile ILogger _logger;
 
@@ -66,6 +68,16 @@ namespace SerilogWeb.Classic
         public static void Register()
         {
             HttpApplication.RegisterModule(typeof(ApplicationLifecycleModule));
+        }
+
+        /// <summary>
+        /// You can add predicates to this list and they will be evaluated before
+        /// logging the request. If *any* fail the request will not be logged.
+        /// </summary>
+        public static IList<Func<HttpContext, bool>> RequestPredicates
+        {
+            get { return _requestPredicates; }
+            set { _requestPredicates = value; }
         }
 
         /// <summary>
@@ -155,7 +167,7 @@ namespace SerilogWeb.Classic
                     stopwatch.Stop();
 
                     var request = HttpContextCurrent.Request;
-                    if (request == null)
+                    if (request == null || !(_requestPredicates ?? Enumerable.Empty<Func<HttpContext, bool>>()).All(p => p(application.Context)))
                         return;
 
                     var error = application.Server.GetLastError();
