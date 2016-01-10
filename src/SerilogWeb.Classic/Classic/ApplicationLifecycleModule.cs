@@ -159,7 +159,9 @@ namespace SerilogWeb.Classic
                         return;
 
                     var error = application.Server.GetLastError();
-                    var level = error != null ? LogEventLevel.Error : _requestLoggingLevel;
+                    var level = error != null || 
+                        (application.Response.StatusCode >= 400 && application.Response.StatusCode <= 599) 
+                        ? LogEventLevel.Error : _requestLoggingLevel;
 
                     var logger = Logger;
                     if (ShouldLogFormData)
