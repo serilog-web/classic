@@ -13,11 +13,11 @@ namespace SerilogWeb.Classic
     /// <code>
     /// protected void Application_Start()
     ///   {
-    ///       GlobalConfiguration.Configure(SerilogWeb.Classic.ExceptionLogger.Register);
+    ///       GlobalConfiguration.Configure(SerilogWeb.Classic.WebApiExceptionLogger.Register);
     ///   }
     /// </code>
     /// </summary>
-    public class ExceptionLogger : IExceptionLogger
+    public class WebApiExceptionLogger : IExceptionLogger
     {
 
         /// <summary>
@@ -25,7 +25,7 @@ namespace SerilogWeb.Classic
         /// </summary>
         public static Action<HttpConfiguration> Register
             => c => c.Services.Add(typeof (IExceptionLogger),
-                new ExceptionLogger());
+                new WebApiExceptionLogger());
 
         /// <summary>
         /// 

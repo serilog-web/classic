@@ -74,7 +74,7 @@
     <Compile Include="Classic\Enrichers\HttpRequestUserAgentEnricher.cs" />
     <Compile Include="Classic\Enrichers\HttpSessionIdEnricher.cs" />
     <Compile Include="Classic\Enrichers\UserNameEnricher.cs" />
-    <Compile Include="Classic\ExceptionLogger.cs" />
+    <Compile Include="Classic\WebApiExceptionLogger.cs" />
     <Compile Include="Classic\LogPostedFormDataOption.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\..\assets\CommonAssemblyInfo.cs">
