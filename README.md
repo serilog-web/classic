@@ -34,21 +34,34 @@ var log = new LoggerConfiguration()
     .CreateLogger();
 ```
 
-The **ApplicationLifecycleModule** will automatically be enabled and will write information events about the current method and url that is being accessed. Optionally you also store any form data that is posted to the server.
-When an unhandled exception occurs, the module will capture it and log it as an error event.
+The **ApplicationLifecycleModule** will automatically be enabled and will write information events about the current method and url that is being accessed. Optionally you also store any form data that is posted to the server. When an unhandled exception occurs, the module will capture it and log it as an error event.
+
+### Configuration
+
+No configuration is necessary, but most of the built-in behavior can be changed using properties on the `ApplicationLifecycleModule` class.
+
+By default, all requests will be logged at the _Information_ level. To change this (i.e. to generate less events under normal conditions) use the `RequestLoggingLevel` property:
+
+```csharp
+ApplicationLifecycleModule.RequestLoggingLevel = LogEventLevel.Debug;
+```
 
 To enable the posting of form data:
 
-```
+```csharp
 ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 // or
 ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnlyOnError;
 ```
 
-Any fields containing the phrase 'password' will be filtered from the logged form data.  This can be disabled with `ApplicationLifecycleModule.FilterPasswordsInFormData = false`.
+Any fields containing the phrase 'password' will be filtered from the logged form data.  This can be disabled with:
+
+```csharp
+ApplicationLifecycleModule.FilterPasswordsInFormData = false;
+```
 
 If you want to disable the logging completely, use the following statement:
 
-```
+```csharp
 ApplicationLifecycleModule.IsEnabled = false;
 ```
