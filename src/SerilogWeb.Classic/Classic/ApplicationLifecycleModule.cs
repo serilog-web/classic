@@ -13,7 +13,7 @@
 // limitations under the License.
 
 using System;
-using System.Collections;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Web;
 using Serilog;
@@ -37,7 +37,7 @@ namespace SerilogWeb.Classic
         static volatile IEnumerable<string> _filteredKeywords = new[] { "password" };
         static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
         static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
-        static volatile IList<Func<HttpContext, bool>> _requestPredicates = new List<Func<HttpContext, bool>>();
+        static volatile ConcurrentBag<Func<HttpContext, bool>> _requestPredicates = new ConcurrentBag<Func<HttpContext, bool>>();
 
         #pragma warning disable 612 // allow obsolete call to keep backwards compatability
         static volatile Func<HttpContext, bool> _shouldLogPostedFormData = context => (LogPostedFormData == LogPostedFormDataOption.Always ||
@@ -79,11 +79,7 @@ namespace SerilogWeb.Classic
         /// You can add predicates to this list and they will be evaluated before
         /// logging the request. If *any* fail the request will not be logged.
         /// </summary>
-        public static IList<Func<HttpContext, bool>> RequestPredicates
-        {
-            get { return _requestPredicates; }
-            set { _requestPredicates = value; }
-        }
+        public static ConcurrentBag<Func<HttpContext, bool>> RequestPredicates => _requestPredicates;
 
         /// <summary>
         /// When set to Always, form data will be written via an event (using
@@ -193,7 +189,7 @@ namespace SerilogWeb.Classic
                     stopwatch.Stop();
 
                     var request = HttpContextCurrent.Request;
-                    if (request == null || !(_requestPredicates ?? Enumerable.Empty<Func<HttpContext, bool>>()).All(p => p(application.Context)))
+                    if (request == null || _requestPredicates.Count != 0 && _requestPredicates.Any(p => !p(application.Context)))
                         return;
 
                     var error = application.Server.GetLastError();
