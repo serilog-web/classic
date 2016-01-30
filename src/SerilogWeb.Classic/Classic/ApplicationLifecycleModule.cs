@@ -31,20 +31,20 @@ namespace SerilogWeb.Classic
     {
         private const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
 
-        static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
-        static volatile bool _isEnabled = true;
-        static volatile bool _filterPasswordsInFormData = true;
-        static volatile IEnumerable<string> _filteredKeywords = new[] { "password" };
-        static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
-        static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
-        static volatile ConcurrentBag<Func<HttpContext, bool>> _requestPredicates = new ConcurrentBag<Func<HttpContext, bool>>();
+        static LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
+        static bool _isEnabled = true;
+        static bool _filterPasswordsInFormData = true;
+        static IEnumerable<string> _filteredKeywords = new[] { "password" };
+        static LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
+        static LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
+        static readonly ConcurrentBag<Func<HttpContext, bool>> _requestPredicates = new ConcurrentBag<Func<HttpContext, bool>>();
 
         #pragma warning disable 612 // allow obsolete call to keep backwards compatability
-        static volatile ConcurrentBag<Func<HttpContext, bool>> _shouldLogPostedFormDataPredicates = new ConcurrentBag<Func<HttpContext, bool>> { context => LogPostedFormData == LogPostedFormDataOption.Always ||
+        static readonly ConcurrentBag<Func<HttpContext, bool>> _shouldLogPostedFormDataPredicates = new ConcurrentBag<Func<HttpContext, bool>> { context => LogPostedFormData == LogPostedFormDataOption.Always ||
                                                                                                                                                   (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && context.Response.StatusCode >= 500)};
         #pragma warning restore 612
 
-        static volatile ILogger _logger;
+        static ILogger _logger;
 
         /// <summary>
         /// The globally-shared logger.
