@@ -40,8 +40,8 @@ namespace SerilogWeb.Classic
         static volatile ConcurrentBag<Func<HttpContext, bool>> _requestPredicates = new ConcurrentBag<Func<HttpContext, bool>>();
 
         #pragma warning disable 612 // allow obsolete call to keep backwards compatability
-        static volatile Func<HttpContext, bool> _shouldLogPostedFormData = context => (LogPostedFormData == LogPostedFormDataOption.Always ||
-            (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && context.Response.StatusCode >= 500));
+        static volatile ConcurrentBag<Func<HttpContext, bool>> _shouldLogPostedFormDataPredicates = new ConcurrentBag<Func<HttpContext, bool>> { context => LogPostedFormData == LogPostedFormDataOption.Always ||
+                                                                                                                                                  (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && context.Response.StatusCode >= 500)};
         #pragma warning restore 612
 
         static volatile ILogger _logger;
@@ -89,7 +89,7 @@ namespace SerilogWeb.Classic
         /// true (which it is, by default).
         /// </summary>
         /// <remarks>
-        /// Obsolete. Use <see cref="ShouldLogPostedFormData"/> to configure
+        /// Obsolete. Use <see cref="ShouldLogPostedFormDataPredicates"/> to configure
         /// when to log posted form data
         /// </remarks>
         [Obsolete]
@@ -149,20 +149,14 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
-        /// The function used to determine if posted form data should be logged.
+        /// You can add predicates to this list and they will be evaluated before
+        /// logging the form data with the request. If *any* succeed the request data will be logged.
         /// </summary>
-        /// <remarks>If set the LogPostedFormData value will be ignored </remarks>
-        public static Func<HttpContext, bool> ShouldLogPostedFormData
-        {
-            get { return _shouldLogPostedFormData; }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                _shouldLogPostedFormData = value;
-            }
-        }
+        /// <remarks>
+        /// Defaults to logging form data for HTTP response 500 and LogPostedFormData is set to OnlyOnError
+        /// or Always. Clear this list to set your own condition or to prevent logging of form data.
+        /// </remarks>
+        public static ConcurrentBag<Func<HttpContext, bool>> ShouldLogPostedFormDataPredicates => _shouldLogPostedFormDataPredicates;
 
         /// <summary>
         /// Initializes a module and prepares it to handle requests.
@@ -189,14 +183,14 @@ namespace SerilogWeb.Classic
                     stopwatch.Stop();
 
                     var request = HttpContextCurrent.Request;
-                    if (request == null || _requestPredicates.Count != 0 && _requestPredicates.Any(p => !p(application.Context)))
+                    if (request == null || (_requestPredicates.Count != 0 && _requestPredicates.Any(p => !p(application.Context))))
                         return;
 
                     var error = application.Server.GetLastError();
                     var level = error != null ? LogEventLevel.Error : _requestLoggingLevel;
 
                     var logger = Logger;
-                    if (logger.IsEnabled(_formDataLoggingLevel) && ShouldLogPostedFormData(HttpContext.Current))
+                    if (logger.IsEnabled(_formDataLoggingLevel) && _shouldLogPostedFormDataPredicates.Count != 0 && _shouldLogPostedFormDataPredicates.Any(p=> p(application.Context)))
                     {
                         var form = request.Unvalidated.Form;
                         if (form.HasKeys())

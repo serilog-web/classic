@@ -11,5 +11,10 @@ namespace SerilogWeb.Test
 
             // throw new InvalidOperationException("Unlucky this time!");
         }
+
+        protected void Fail(object sender, EventArgs e)
+        {
+            throw new InvalidOperationException("Kablooey");
+        }
     }
 }
