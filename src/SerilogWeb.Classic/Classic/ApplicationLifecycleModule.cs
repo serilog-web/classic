@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Web;
 using Serilog;
@@ -37,9 +36,12 @@ namespace SerilogWeb.Classic
         static IEnumerable<string> _filteredKeywords = new[] { "password" };
         static LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
         static LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
-        static readonly ConcurrentBag<Func<HttpContext, bool>> _requestFilterPredicates = new ConcurrentBag<Func<HttpContext, bool>>();
-        static Func<HttpContext, bool> _shouldLogPostedFormDataPredicate = context => false;
-        
+        static readonly Func<HttpContext, bool> AlwaysTrue = context => true;
+        static readonly Func<HttpContext, bool> AlwaysFalse = context => false;
+        static readonly Func<HttpContext, bool> DefaultErrorStrategy = context => context.Response.StatusCode >= 500;
+        static Func<HttpContext, bool> _requestFilter = AlwaysFalse;
+        static Func<HttpContext, bool> _shouldLogPostedFormData = AlwaysFalse;
+
         static ILogger _logger;
 
         /// <summary>
@@ -72,16 +74,26 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
-        /// You can add predicates to this list and they will be evaluated before
-        /// logging the request. If *any* fail the request will not be logged.
+        /// Custom predicate to filter which requests are logged. If the value
+        /// returned is true then the request will be filtered and not logged.        
         /// </summary>
-        public static ConcurrentBag<Func<HttpContext, bool>> RequestFilterPredicates => _requestFilterPredicates;
+        public static Func<HttpContext, bool> RequestFilter
+        {
+            get { return _requestFilter; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                _requestFilter = value;
+            }
+        }
 
         /// <summary>
         /// When set to Always, form data will be written via an event (using
         /// severity from FormDataLoggingLevel).  When set to OnlyOnError, this
         /// will only be written if the Response has a 500 status.
-        /// When set to OnMatch <see cref="ShouldLogPostedFormDataPredicate"/>
+        /// When set to OnMatch <see cref="ShouldLogPostedFormData"/>
         /// is executed to determine if form data is logged.
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
@@ -146,15 +158,15 @@ namespace SerilogWeb.Classic
         /// <see cref="LogPostedFormData"/> must be set to OnMatch for this to execute.
         /// </summary>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public static Func<HttpContext, bool> ShouldLogPostedFormDataPredicate
+        public static Func<HttpContext, bool> ShouldLogPostedFormData
         {
-            get { return _shouldLogPostedFormDataPredicate;}
+            get { return _shouldLogPostedFormData;}
             set
             {
                 if (value == null)
                     throw new ArgumentNullException(nameof(value));
 
-                _shouldLogPostedFormDataPredicate = value;
+                _shouldLogPostedFormData = value;
             }
         }
 
@@ -183,7 +195,7 @@ namespace SerilogWeb.Classic
                     stopwatch.Stop();
 
                     var request = HttpContextCurrent.Request;
-                    if (request == null || (_requestFilterPredicates.Count != 0 && _requestFilterPredicates.Any(p => !p(application.Context))))
+                    if (request == null || _requestFilter(application.Context))
                         return;
 
                     var error = application.Server.GetLastError();
@@ -219,13 +231,13 @@ namespace SerilogWeb.Classic
                 switch (_logPostedFormData)
                 {
                     case LogPostedFormDataOption.Never:
-                        return context => false;
+                        return AlwaysFalse;
                     case LogPostedFormDataOption.Always:
-                        return context => true;
+                        return AlwaysTrue;
                     case LogPostedFormDataOption.OnlyOnError:
-                        return context => context.Response.StatusCode >= 500;
+                        return DefaultErrorStrategy;
                     case LogPostedFormDataOption.OnMatch:
-                        return _shouldLogPostedFormDataPredicate;
+                        return _shouldLogPostedFormData;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

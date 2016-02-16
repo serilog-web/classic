@@ -24,7 +24,7 @@ namespace SerilogWeb.Classic
         /// </summary>
         OnlyOnError,
         /// <summary>
-        /// Uses the custom predicate defined by <see cref="ApplicationLifecycleModule.ShouldLogPostedFormDataPredicate"/>
+        /// Uses the custom predicate defined by <see cref="ApplicationLifecycleModule.ShouldLogPostedFormData"/>
         /// to determine if posted form values are logged
         /// </summary>
         OnMatch

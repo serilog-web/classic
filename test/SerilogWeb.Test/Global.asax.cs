@@ -11,9 +11,9 @@ namespace SerilogWeb.Test
         {
             ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Debug;
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnMatch;
-            ApplicationLifecycleModule.ShouldLogPostedFormDataPredicate = context => context.Response.StatusCode >= 400;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = context => context.Response.StatusCode >= 400;
 
-            ApplicationLifecycleModule.RequestFilterPredicates.Add(context => context.Request.QueryString["nolog"] == "true");
+            ApplicationLifecycleModule.RequestFilter = context => context.Request.Url.PathAndQuery.StartsWith("/__browserLink");
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
