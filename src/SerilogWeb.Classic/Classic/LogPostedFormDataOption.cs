@@ -22,6 +22,11 @@ namespace SerilogWeb.Classic
         /// <summary>
         /// Posted form values are logged if Response.StatusCode >= 500
         /// </summary>
-        OnlyOnError
+        OnlyOnError,
+        /// <summary>
+        /// Uses the custom predicate defined by <see cref="ApplicationLifecycleModule.ShouldLogPostedFormData"/>
+        /// to determine if posted form values are logged
+        /// </summary>
+        OnMatch
     }
 }

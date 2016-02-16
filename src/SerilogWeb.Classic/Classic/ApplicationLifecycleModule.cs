@@ -30,14 +30,19 @@ namespace SerilogWeb.Classic
     {
         private const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
 
-        static volatile LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
-        static volatile bool _isEnabled = true;
-        static volatile bool _filterPasswordsInFormData = true;
-        static volatile IEnumerable<string> _filteredKeywords = new[] { "password" };
-        static volatile LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
-        static volatile LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
+        static LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
+        static bool _isEnabled = true;
+        static bool _filterPasswordsInFormData = true;
+        static IEnumerable<string> _filteredKeywords = new[] { "password" };
+        static LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
+        static LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
+        static readonly Func<HttpContext, bool> AlwaysTrue = context => true;
+        static readonly Func<HttpContext, bool> AlwaysFalse = context => false;
+        static readonly Func<HttpContext, bool> DefaultErrorStrategy = context => context.Response.StatusCode >= 500;
+        static Func<HttpContext, bool> _requestFilter = AlwaysFalse;
+        static Func<HttpContext, bool> _shouldLogPostedFormData = AlwaysFalse;
 
-        static volatile ILogger _logger;
+        static ILogger _logger;
 
         /// <summary>
         /// The globally-shared logger.
@@ -69,9 +74,27 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
+        /// Custom predicate to filter which requests are logged. If the value
+        /// returned is true then the request will be filtered and not logged.        
+        /// </summary>
+        public static Func<HttpContext, bool> RequestFilter
+        {
+            get { return _requestFilter; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                _requestFilter = value;
+            }
+        }
+
+        /// <summary>
         /// When set to Always, form data will be written via an event (using
         /// severity from FormDataLoggingLevel).  When set to OnlyOnError, this
         /// will only be written if the Response has a 500 status.
+        /// When set to OnMatch <see cref="ShouldLogPostedFormData"/>
+        /// is executed to determine if form data is logged.
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
         /// </summary>
@@ -131,6 +154,23 @@ namespace SerilogWeb.Classic
         }
 
         /// <summary>
+        /// Custom predicate to determine whether form data should be logged. 
+        /// <see cref="LogPostedFormData"/> must be set to OnMatch for this to execute.
+        /// </summary>
+        /// <exception cref="System.ArgumentNullException"></exception>
+        public static Func<HttpContext, bool> ShouldLogPostedFormData
+        {
+            get { return _shouldLogPostedFormData;}
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(value));
+
+                _shouldLogPostedFormData = value;
+            }
+        }
+
+        /// <summary>
         /// Initializes a module and prepares it to handle requests.
         /// </summary>
         /// <param name="application">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
@@ -155,14 +195,14 @@ namespace SerilogWeb.Classic
                     stopwatch.Stop();
 
                     var request = HttpContextCurrent.Request;
-                    if (request == null)
+                    if (request == null || _requestFilter(application.Context))
                         return;
 
                     var error = application.Server.GetLastError();
                     var level = error != null ? LogEventLevel.Error : _requestLoggingLevel;
 
                     var logger = Logger;
-                    if (ShouldLogFormData)
+                    if (logger.IsEnabled(_formDataLoggingLevel) && FormLoggingStrategy(application.Context))
                     {
                         var form = request.Unvalidated.Form;
                         if (form.HasKeys())
@@ -184,9 +224,25 @@ namespace SerilogWeb.Classic
             };
         }
 
-        static bool ShouldLogFormData => Logger.IsEnabled(_formDataLoggingLevel) &&
-            (LogPostedFormData == LogPostedFormDataOption.Always ||
-                (LogPostedFormData == LogPostedFormDataOption.OnlyOnError && HttpContext.Current.Response.StatusCode >= 500));
+        static Func<HttpContext, bool> FormLoggingStrategy
+        {
+            get
+            {
+                switch (_logPostedFormData)
+                {
+                    case LogPostedFormDataOption.Never:
+                        return AlwaysFalse;
+                    case LogPostedFormDataOption.Always:
+                        return AlwaysTrue;
+                    case LogPostedFormDataOption.OnlyOnError:
+                        return DefaultErrorStrategy;
+                    case LogPostedFormDataOption.OnMatch:
+                        return _shouldLogPostedFormData;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+        }
 
         /// <summary>
         /// Filters configured keywords from being logged
