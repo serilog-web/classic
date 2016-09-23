@@ -28,7 +28,7 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        private const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
+        const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
 
         static LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
         static bool _isEnabled = true;
@@ -199,7 +199,7 @@ namespace SerilogWeb.Classic
                         return;
 
                     var error = application.Server.GetLastError();
-                    var level = error != null ? LogEventLevel.Error : _requestLoggingLevel;
+                    var level = error != null || application.Response.StatusCode >= 500 ? LogEventLevel.Error : _requestLoggingLevel;
 
                     var logger = Logger;
                     if (logger.IsEnabled(_formDataLoggingLevel) && FormLoggingStrategy(application.Context))
