@@ -37,24 +37,5 @@ namespace SerilogWeb.Classic.Enrichers
                 }
             }
         }
-
-        [DebuggerNonUserCode]
-        internal static HttpResponse Response
-        {
-            get
-            {
-                HttpContext httpContext = HttpContext.Current;
-                if (httpContext == null)
-                    return null;
-                try
-                {
-                    return httpContext.Response;
-                }
-                catch (HttpException)
-                {
-                    return null;
-                }
-            }
-        }
     }
 }

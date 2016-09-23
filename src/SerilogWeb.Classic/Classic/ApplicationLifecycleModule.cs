@@ -198,10 +198,8 @@ namespace SerilogWeb.Classic
                     if (request == null || _requestFilter(application.Context))
                         return;
 
-                    var response = HttpContextCurrent.Response;
-
                     var error = application.Server.GetLastError();
-                    var level = error != null || response?.StatusCode >= 500 ? LogEventLevel.Error : _requestLoggingLevel;
+                    var level = error != null || application.Response.StatusCode >= 500 ? LogEventLevel.Error : _requestLoggingLevel;
 
                     var logger = Logger;
                     if (logger.IsEnabled(_formDataLoggingLevel) && FormLoggingStrategy(application.Context))
