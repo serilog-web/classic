@@ -40,18 +40,34 @@ namespace SerilogWeb.Classic.Enrichers
         {
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
-            if (HttpContext.Current == null)
+            Guid requestId;
+            if (!TryGetCurrentHttpRequestId(out requestId))
                 return;
 
-            Guid requestId;
+            var requestIdProperty = new LogEventProperty(HttpRequestIdPropertyName, new ScalarValue(requestId));
+            logEvent.AddPropertyIfAbsent(requestIdProperty);
+        }
+
+        /// <summary>
+        /// Retrieve the id assigned to the currently-executing HTTP request, if any.
+        /// </summary>
+        /// <param name="requestId">The request id.</param>
+        /// <returns><c>true</c> if there is a request in progress; <c>false</c> otherwise.</returns>
+        public static bool TryGetCurrentHttpRequestId(out Guid requestId)
+        {
+            if (HttpContext.Current == null)
+            {
+                requestId = default(Guid);
+                return false;
+            }
+
             var requestIdItem = HttpContext.Current.Items[RequestIdItemName];
             if (requestIdItem == null)
                 HttpContext.Current.Items[RequestIdItemName] = requestId = Guid.NewGuid();
             else
                 requestId = (Guid)requestIdItem;
 
-            var requestIdProperty = new LogEventProperty(HttpRequestIdPropertyName, new ScalarValue(requestId));
-            logEvent.AddPropertyIfAbsent(requestIdProperty);
+            return true;
         }
     }
 }
