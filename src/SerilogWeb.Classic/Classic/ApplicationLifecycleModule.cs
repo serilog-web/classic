@@ -203,10 +203,7 @@ namespace SerilogWeb.Classic
 
                     if (level == LogEventLevel.Error && error == null)
                     {
-                        if (application.Context.AllErrors.Length > 0)
-                        {
-                            error = application.Context.AllErrors[application.Context.AllErrors.Length - 1];
-                        }
+                        error = application.Context.AllErrors.LastOrDefault();
                     }
 
                     var logger = Logger;
