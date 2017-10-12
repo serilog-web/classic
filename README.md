@@ -1,4 +1,4 @@
-# SerilogWeb.Classic [![Build status](https://ci.appveyor.com/api/projects/status/lpf4kdc7su3l67be?svg=true)](https://ci.appveyor.com/project/serilog-web/classic)
+# SerilogWeb.Classic [![Build status](https://ci.appveyor.com/api/projects/status/lpf4kdc7su3l67be?svg=true)](https://ci.appveyor.com/project/serilog-web/classic) [![NuGet](https://img.shields.io/nuget/v/SerilogWeb.Classic.svg)](https://www.nuget.org/packages/serilogweb.classic)
 
 Web request logging and enrichment for classic ASP.NET applications (System.Web).
 
