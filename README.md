@@ -7,17 +7,35 @@ Web request logging and enrichment for classic ASP.NET applications (System.Web)
 
 _This package replaces the Serilog.Extras.Web package previously included in the [Serilog project](https://github.com/serilog/serilog)._
 
-When you work with an ASP.NET web application, this package adds additional enrichers and an `HttpModule` to enhance the logging output. The following enrichers are available:
+_This package is designed for full framework ASP.NET applications. For ASP.NET Core, have a look at [Serilog.AspNetCore](https://github.com/serilog/serilog-aspnetcore)_
 
-*  **HttpRequestId** A GUID used to identify requests.
-*  **HttpRequestNumber** an incrementing number per request.
-*  **HttpRequestTraceId** GUID matching the RequestTraceIdentifier assigned by IIS and used throughout ASP.NET/ETW. IIS ETW tracing must be enabled for this to work.
-*  **HttpSessionId** The current ASP.NET session id.
-*  **UserName** The current username or, when anonymous, a defined value. By default this is set to _(anonymous)_.
+When you work with an ASP.NET web application, this package adds 
+- additional enrichers 
+- an `HttpModule` to enhance the logging output. 
+
+When working with ASP.NET MVC (not Core) or ASP.NET Web API, you may also want to have a look at [SerilogWeb.Classic.Mvc](https://github.com/serilog-web/classic-mvc) and [SerilogWeb.Classic.WebAPI](https://github.com/serilog-web/classic-webapi)
+
+## Enrichers
+The following enrichers are available in the `SerilogWeb.Classic.Enrichers` namespace:
+
+*  **ClaimValueEnricher** : the value of a given claim from the current `ClaimsIdentity` User
+*  **HttpRequestClientHostIPEnricher** : adds a property `HttpRequestClientHostIP` containing  `Request.UserHostAddress` (optionally checking for proxy header)
+*  **HttpRequestClientHostNameEnricher** : adds a property `HttpRequestClientHostName` containing  ``Request.UserHostName`
+*  **HttpRequestIdEnricher** : adds a property `HttpRequestId` with a GUID used to identify requests.
+*  **HttpRequestNumberEnricher** : adds a property `HttpRequestNumber` with an incrementing number per request.
+*  **HttpRequestRawUrlEnricher** : adds a property `HttpRequestRawUrl` with the Raw Url of the Request.
+*  **HttpRequestTraceIdEnricher** : adds a property `HttpRequestTraceId` with a GUID matching the RequestTraceIdentifier assigned by IIS and used throughout ASP.NET/ETW. (IIS ETW tracing must be enabled for this to work)
+*  **HttpRequestTypeEnricher** : adds a property `HttpRequestType` with the Request Type (`GET` or `POST`).
+*  **HttpRequestUrlEnricher** : adds a property `HttpRequestUrl` with the Url of the Request.
+*  **HttpRequestUrlReferrerEnricher** : adds a property `HttpRequestUrlReferrer` with the UrlReferrer of the Request.
+*  **HttpRequestUserAgentEnricher** : adds a property `HttpRequestUserAgent` with the User Agent of the Request.
+*  **HttpSessionIdEnricher** : adds a property `HttpSessionId` with the current ASP.NET session id.
+*  **UserNameEnricher** : adds a property `UserName` with the current username or, when anonymous, a defined value. By default this is set to _(anonymous)_.
+
 
 ```csharp
 var log = new LoggerConfiguration()
-    .WriteTo.ColoredConsole()
+    .WriteTo.Console()
     .Enrich.With<HttpRequestIdEnricher>()
     .Enrich.With<UserNameEnricher>()
     .CreateLogger();
@@ -32,6 +50,7 @@ var log = new LoggerConfiguration()
     .CreateLogger();
 ```
 
+## HttpModule
 The **ApplicationLifecycleModule** will automatically be enabled and will write information events about the current method and url that is being accessed. Optionally you also store any form data that is posted to the server. When an unhandled exception occurs, the module will capture it and log it as an error event.
 
 ### Configuration
