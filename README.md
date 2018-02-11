@@ -18,9 +18,9 @@ When working with ASP.NET MVC (not Core) or ASP.NET Web API, you may also want t
 ## Enrichers
 The following enrichers are available in the `SerilogWeb.Classic.Enrichers` namespace:
 
-*  **ClaimValueEnricher** : the value of a given claim from the current `ClaimsIdentity` User
+*  **ClaimValueEnricher** : adds a property contaning the value of a given claim from the current `ClaimsIdentity` User
 *  **HttpRequestClientHostIPEnricher** : adds a property `HttpRequestClientHostIP` containing  `Request.UserHostAddress` (optionally checking for proxy header)
-*  **HttpRequestClientHostNameEnricher** : adds a property `HttpRequestClientHostName` containing  ``Request.UserHostName`
+*  **HttpRequestClientHostNameEnricher** : adds a property `HttpRequestClientHostName` containing  `Request.UserHostName`
 *  **HttpRequestIdEnricher** : adds a property `HttpRequestId` with a GUID used to identify requests.
 *  **HttpRequestNumberEnricher** : adds a property `HttpRequestNumber` with an incrementing number per request.
 *  **HttpRequestRawUrlEnricher** : adds a property `HttpRequestRawUrl` with the Raw Url of the Request.
