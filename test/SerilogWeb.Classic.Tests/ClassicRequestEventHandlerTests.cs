@@ -85,6 +85,29 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void EnableDisable()
+        {
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+
+            ApplicationLifecycleModule.IsEnabled = false;
+
+            var eventHandler = new ClassicRequestEventHandler(new FakeHttpApplication());
+            eventHandler.OnBeginRequest();
+            eventHandler.OnLogRequest();
+
+            var evt = Events.FirstOrDefault();
+            Assert.Null(evt);
+
+            ApplicationLifecycleModule.IsEnabled = true;
+
+            eventHandler.OnBeginRequest();
+            eventHandler.OnLogRequest();
+
+            var evt2 = Events.FirstOrDefault();
+            Assert.NotNull(evt2);
+        }
+
+        [Fact]
         public void CustomLogger()
         {
             List<LogEvent> logEvents = new List<LogEvent>();
@@ -113,7 +136,6 @@ namespace SerilogWeb.Classic.Tests
         // TODO : keywords / passwords
         // TODO : Form Data !
         // TODO : All the options on ApplicationLifecycleModule
-        // TODO : set Enabled / Disabled
         // TODO : set RequestFilter
         // TODO : set LogPostedFormData
         // TODO : set FilterPasswordsInFormData
