@@ -54,6 +54,7 @@ namespace SerilogWeb.Classic.Tests
             Assert.Null(evt.Exception);
             Assert.Equal("HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", evt.MessageTemplate.Text);
 
+            Assert.Equal($"{typeof(ApplicationLifecycleModule)}", evt.Properties[Constants.SourceContextPropertyName].LiteralValue());
             Assert.Equal(httpMethod, evt.Properties["Method"].LiteralValue());
             Assert.Equal(rawUrl, evt.Properties["RawUrl"].LiteralValue());
             Assert.Equal(httpStatus, evt.Properties["StatusCode"].LiteralValue());
@@ -83,12 +84,36 @@ namespace SerilogWeb.Classic.Tests
             Assert.Equal(requestLoggingLevel, evt.Level);
         }
 
+        [Fact]
+        public void CustomLogger()
+        {
+            List<LogEvent> logEvents = new List<LogEvent>();
+            using (var myLogger = new LoggerConfiguration()
+                .WriteTo.Sink(new DelegatingSink(ev => logEvents.Add(ev)))
+                .CreateLogger())
+            {
+                ApplicationLifecycleModule.Logger = myLogger;
+
+                var eventHandler = new ClassicRequestEventHandler(new FakeHttpApplication());
+                eventHandler.OnBeginRequest();
+                eventHandler.OnLogRequest();
+
+                var globalLoggerEvent = Events.FirstOrDefault();
+                Assert.Null(globalLoggerEvent);
+
+                var loggerEvent = logEvents.FirstOrDefault();
+                Assert.NotNull(loggerEvent);
+                Assert.Equal($"{typeof(ApplicationLifecycleModule)}",
+                    loggerEvent.Properties[Constants.SourceContextPropertyName].LiteralValue());
+            }
+
+        }
+
         // TODO : Errors / Exceptions etc
         // TODO : keywords / passwords
         // TODO : Form Data !
         // TODO : All the options on ApplicationLifecycleModule
         // TODO : set Enabled / Disabled
-        // TODO : set Logger
         // TODO : set RequestFilter
         // TODO : set LogPostedFormData
         // TODO : set FilterPasswordsInFormData
