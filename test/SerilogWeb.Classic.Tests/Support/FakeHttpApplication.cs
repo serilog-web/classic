@@ -6,24 +6,35 @@ namespace SerilogWeb.Classic.Tests.Support
 {
     public class FakeHttpApplication : IHttpApplication
     {
-        public HttpContextBase Context { get; } = new FakeHttpContext();
+        public HttpContextBase Context { get; }
         public FakeHttpRequest Request { get; } = new FakeHttpRequest();
         HttpRequestBase IHttpApplication.Request => Request;
-        public HttpResponseBase Response { get; } = new FakeHttpResponse();
+        public HttpResponseBase Response { get; set; }
         public HttpServerUtilityBase Server { get; } = new FakeHttpServerUtility();
+
+        public FakeHttpApplication()
+        {
+            var ctx = new FakeHttpContext(this);
+            Context = ctx;
+        }
     }
 
 
     public class FakeHttpContext : HttpContextBase
     {
-        public FakeHttpContext()
+        private readonly FakeHttpApplication _fakeHttpApplication;
+
+        public FakeHttpContext(FakeHttpApplication fakeHttpApplication)
         {
+            _fakeHttpApplication = fakeHttpApplication ?? throw new ArgumentNullException(nameof(fakeHttpApplication));
             Items = new Hashtable();
         }
 
         public override IDictionary Items { get; }
 
         public override Exception[] AllErrors => new Exception[0];
+
+        public override HttpRequestBase Request => _fakeHttpApplication.Request;
     }
 
     public class FakeHttpRequest : HttpRequestBase

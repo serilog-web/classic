@@ -15,6 +15,8 @@ namespace SerilogWeb.Classic.Tests
         private List<LogEvent> Events { get; }
         private LoggingLevelSwitch LevelSwitch { get; } = new LoggingLevelSwitch();
 
+        private LogEvent LastEvent => Events.LastOrDefault();
+
 
         public ClassicRequestEventHandlerTests()
         {
@@ -41,14 +43,15 @@ namespace SerilogWeb.Classic.Tests
             var app = new FakeHttpApplication();
             app.Request.SetRawUrl(rawUrl);
             app.Request.SetHttpMethod(httpMethod);
-            app.Response.StatusCode = httpStatus;
             var sleepTimeMilliseconds = 4;
             var eventHandler = new ClassicRequestEventHandler(app);
+
             eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse(){StatusCode = httpStatus};
             Thread.Sleep(sleepTimeMilliseconds); // need some time to have some duration of elapsed !
             eventHandler.OnLogRequest();
 
-            var evt = Events.FirstOrDefault();
+            var evt = LastEvent;
             Assert.NotNull(evt);
             Assert.Equal(LogEventLevel.Information, evt.Level);
             Assert.Null(evt.Exception);
@@ -75,11 +78,13 @@ namespace SerilogWeb.Classic.Tests
             LevelSwitch.MinimumLevel = requestLoggingLevel;
             ApplicationLifecycleModule.RequestLoggingLevel = requestLoggingLevel;
 
-            var eventHandler = new ClassicRequestEventHandler(new FakeHttpApplication());
+            var app = new FakeHttpApplication();
+            var eventHandler = new ClassicRequestEventHandler(app);
             eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
             eventHandler.OnLogRequest();
 
-            var evt = Events.FirstOrDefault();
+            var evt = LastEvent;
             Assert.NotNull(evt);
             Assert.Equal(requestLoggingLevel, evt.Level);
         }
@@ -91,20 +96,21 @@ namespace SerilogWeb.Classic.Tests
 
             ApplicationLifecycleModule.IsEnabled = false;
 
-            var eventHandler = new ClassicRequestEventHandler(new FakeHttpApplication());
+            var app = new FakeHttpApplication();
+            var eventHandler = new ClassicRequestEventHandler(app);
             eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
             eventHandler.OnLogRequest();
 
-            var evt = Events.FirstOrDefault();
-            Assert.Null(evt);
+            Assert.Null(LastEvent);
 
             ApplicationLifecycleModule.IsEnabled = true;
-
+            app.Response = null;
             eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
             eventHandler.OnLogRequest();
 
-            var evt2 = Events.FirstOrDefault();
-            Assert.NotNull(evt2);
+            Assert.NotNull(LastEvent);
         }
 
         [Fact]
@@ -117,26 +123,64 @@ namespace SerilogWeb.Classic.Tests
             {
                 ApplicationLifecycleModule.Logger = myLogger;
 
-                var eventHandler = new ClassicRequestEventHandler(new FakeHttpApplication());
+                var app = new FakeHttpApplication();
+                var eventHandler = new ClassicRequestEventHandler(app);
                 eventHandler.OnBeginRequest();
+                app.Response = new FakeHttpResponse();
                 eventHandler.OnLogRequest();
 
-                var globalLoggerEvent = Events.FirstOrDefault();
-                Assert.Null(globalLoggerEvent);
+                Assert.Null(LastEvent);
 
                 var loggerEvent = logEvents.FirstOrDefault();
                 Assert.NotNull(loggerEvent);
                 Assert.Equal($"{typeof(ApplicationLifecycleModule)}",
                     loggerEvent.Properties[Constants.SourceContextPropertyName].LiteralValue());
             }
+        }
 
+        [Fact]
+        public void RequestFiltering()
+        {
+            var ignoredPath = "/ignoreme/";
+            var ignoredMethod = "HEAD";
+            ApplicationLifecycleModule.RequestFilter = ctx =>
+                ctx.Request.RawUrl.ToLowerInvariant().Contains(ignoredPath.ToLowerInvariant())
+                || ctx.Request.HttpMethod == ignoredMethod;
+
+            var app = new FakeHttpApplication();
+            var eventHandler = new ClassicRequestEventHandler(app);
+
+            app.Request.SetHttpMethod("GET");
+            app.Request.SetRawUrl($"{ignoredPath}widgets");
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            Assert.Null(LastEvent); // should be filtered out
+
+            app.Response = null;
+            app.Request.SetHttpMethod(ignoredMethod);
+            app.Request.SetRawUrl("/index.html");
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            Assert.Null(LastEvent); // should be filtered out
+
+            app.Response = null;
+            app.Request.SetHttpMethod("GET");
+            app.Request.SetRawUrl("/index.html");
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            Assert.NotNull(LastEvent);
         }
 
         // TODO : Errors / Exceptions etc
         // TODO : keywords / passwords
         // TODO : Form Data !
         // TODO : All the options on ApplicationLifecycleModule
-        // TODO : set RequestFilter
         // TODO : set LogPostedFormData
         // TODO : set FilterPasswordsInFormData
         // TODO : set FilteredKeywordsInFormData
