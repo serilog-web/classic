@@ -7,16 +7,23 @@ namespace SerilogWeb.Classic.Tests.Support
 {
     public class FakeHttpApplication : IHttpApplication
     {
-        public HttpContextBase Context { get; }
-        public FakeHttpRequest Request { get; } = new FakeHttpRequest();
+        public HttpContextBase Context { get; private set; }
+        public FakeHttpRequest Request { get; private set; }
         HttpRequestBase IHttpApplication.Request => Request;
         public HttpResponseBase Response { get; set; }
-        public HttpServerUtilityBase Server { get; } = new FakeHttpServerUtility();
+        public HttpServerUtilityBase Server { get; private set; }
 
         public FakeHttpApplication()
         {
-            var ctx = new FakeHttpContext(this);
-            Context = ctx;
+            Reset();
+        }
+
+        public void Reset()
+        {
+            Context = new FakeHttpContext(this);
+            Request = new FakeHttpRequest();
+            Response = null;
+            Server = new FakeHttpServerUtility();
         }
     }
 

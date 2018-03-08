@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
-using System.Threading;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -13,16 +12,17 @@ namespace SerilogWeb.Classic.Tests
 {
     public class ClassicRequestEventHandlerTests : IDisposable
     {
+        private LoggingLevelSwitch LevelSwitch { get; }
         private List<LogEvent> Events { get; }
-        private LoggingLevelSwitch LevelSwitch { get; } = new LoggingLevelSwitch();
-
         private LogEvent LastEvent => Events.LastOrDefault();
-
+        private FakeHttpApplication App { get; }
 
         public ClassicRequestEventHandlerTests()
         {
             ApplicationLifecycleModule.ResetConfiguration();
+            App = new FakeHttpApplication();
             Events = new List<LogEvent>();
+            LevelSwitch = new LoggingLevelSwitch();
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(LevelSwitch)
                 .WriteTo.Sink(new DelegatingSink(ev => Events.Add(ev)))
@@ -41,16 +41,11 @@ namespace SerilogWeb.Classic.Tests
         [InlineData("HEAD", "http://www.example.org", 200)]
         public void BasicRequestLogging(string httpMethod, string rawUrl, int httpStatus)
         {
-            var app = new FakeHttpApplication();
-            app.Request.SetRawUrl(rawUrl);
-            app.Request.SetHttpMethod(httpMethod);
+            App.Request.SetRawUrl(rawUrl);
+            App.Request.SetHttpMethod(httpMethod);
             var sleepTimeMilliseconds = 4;
-            var eventHandler = new ClassicRequestEventHandler(app);
 
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse() { StatusCode = httpStatus };
-            Thread.Sleep(sleepTimeMilliseconds); // need some time to have some duration of elapsed !
-            eventHandler.OnLogRequest();
+            App.SimulateRequest(httpMethod, rawUrl, httpStatus, sleepTimeMilliseconds);
 
             var evt = LastEvent;
             Assert.NotNull(evt);
@@ -79,11 +74,7 @@ namespace SerilogWeb.Classic.Tests
             LevelSwitch.MinimumLevel = requestLoggingLevel;
             ApplicationLifecycleModule.RequestLoggingLevel = requestLoggingLevel;
 
-            var app = new FakeHttpApplication();
-            var eventHandler = new ClassicRequestEventHandler(app);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
+            App.SimulateRequest();
 
             var evt = LastEvent;
             Assert.NotNull(evt);
@@ -101,18 +92,9 @@ namespace SerilogWeb.Classic.Tests
             LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
-            var app = new FakeHttpApplication();
-            app.Request.Unvalidated.Form.Clear();
-            app.Request.Unvalidated.Form.Add(formData);
-            var eventHandler = new ClassicRequestEventHandler(app);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
+            App.SimulateForm(formData);
 
-            var evt = LastEvent;
-            Assert.NotNull(evt);
-
-            var formDataProperty = evt.Properties["FormData"];
+            var formDataProperty = LastEvent.Properties["FormData"];
             Assert.NotNull(formDataProperty);
             var expected = formData.ToSerilogNameValuePropertySequence();
             Assert.Equal(expected.ToString(), formDataProperty.ToString());
@@ -124,12 +106,7 @@ namespace SerilogWeb.Classic.Tests
             LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
-            var app = new FakeHttpApplication();
-            app.Request.Unvalidated.Form.Clear();
-            var eventHandler = new ClassicRequestEventHandler(app);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
+            App.SimulateForm(new NameValueCollection());
 
             var evt = LastEvent;
             Assert.NotNull(evt);
@@ -147,39 +124,23 @@ namespace SerilogWeb.Classic.Tests
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
             ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Verbose;
 
-            var app = new FakeHttpApplication();
-            var eventHandler = new ClassicRequestEventHandler(app);
-
             LevelSwitch.MinimumLevel = LogEventLevel.Information;
-            app.Request.Unvalidated.Form.Clear();
-            app.Request.Unvalidated.Form.Add(formData);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
+            App.SimulateForm(formData);
 
             // logging postedFormData in Verbose only
             // but current level is Information
-            Assert.NotNull(LastEvent);
             Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
 
             LevelSwitch.MinimumLevel = LogEventLevel.Debug;
-            app.Request.Unvalidated.Form.Clear();
-            app.Request.Unvalidated.Form.Add(formData);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
+            App.SimulateForm(formData);
 
             // logging postedFormData in Verbose only
             // but current level is Debug
-            Assert.NotNull(LastEvent);
             Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
 
             LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
-            app.Request.Unvalidated.Form.Clear();
-            app.Request.Unvalidated.Form.Add(formData);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
+            App.SimulateForm(formData);
+
             var formDataProperty = LastEvent.Properties["FormData"];
             Assert.NotNull(formDataProperty);
             var expected = formData.ToSerilogNameValuePropertySequence();
@@ -192,46 +153,32 @@ namespace SerilogWeb.Classic.Tests
             LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
 
             ApplicationLifecycleModule.IsEnabled = false;
-
-            var app = new FakeHttpApplication();
-            var eventHandler = new ClassicRequestEventHandler(app);
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
-
+            App.SimulateRequest();
             Assert.Null(LastEvent);
 
             ApplicationLifecycleModule.IsEnabled = true;
-            app.Response = null;
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
-
+            App.SimulateRequest();
             Assert.NotNull(LastEvent);
         }
 
         [Fact]
         public void CustomLogger()
         {
-            List<LogEvent> logEvents = new List<LogEvent>();
+            var myLogEvents = new List<LogEvent>();
             using (var myLogger = new LoggerConfiguration()
-                .WriteTo.Sink(new DelegatingSink(ev => logEvents.Add(ev)))
+                .WriteTo.Sink(new DelegatingSink(ev => myLogEvents.Add(ev)))
                 .CreateLogger())
             {
                 ApplicationLifecycleModule.Logger = myLogger;
 
-                var app = new FakeHttpApplication();
-                var eventHandler = new ClassicRequestEventHandler(app);
-                eventHandler.OnBeginRequest();
-                app.Response = new FakeHttpResponse();
-                eventHandler.OnLogRequest();
+                App.SimulateRequest();
 
                 Assert.Null(LastEvent);
 
-                var loggerEvent = logEvents.FirstOrDefault();
-                Assert.NotNull(loggerEvent);
+                var myEvent = myLogEvents.FirstOrDefault();
+                Assert.NotNull(myEvent);
                 Assert.Equal($"{typeof(ApplicationLifecycleModule)}",
-                    loggerEvent.Properties[Constants.SourceContextPropertyName].LiteralValue());
+                    myEvent.Properties[Constants.SourceContextPropertyName].LiteralValue());
             }
         }
 
@@ -244,33 +191,13 @@ namespace SerilogWeb.Classic.Tests
                 ctx.Request.RawUrl.ToLowerInvariant().Contains(ignoredPath.ToLowerInvariant())
                 || ctx.Request.HttpMethod == ignoredMethod;
 
-            var app = new FakeHttpApplication();
-            var eventHandler = new ClassicRequestEventHandler(app);
-
-            app.Request.SetHttpMethod("GET");
-            app.Request.SetRawUrl($"{ignoredPath}widgets");
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
-
+            App.SimulateRequest("GET", $"{ignoredPath}widgets");
             Assert.Null(LastEvent); // should be filtered out
 
-            app.Response = null;
-            app.Request.SetHttpMethod(ignoredMethod);
-            app.Request.SetRawUrl("/index.html");
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
-
+            App.SimulateRequest(ignoredMethod, "/index.html");
             Assert.Null(LastEvent); // should be filtered out
 
-            app.Response = null;
-            app.Request.SetHttpMethod("GET");
-            app.Request.SetRawUrl("/index.html");
-            eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse();
-            eventHandler.OnLogRequest();
-
+            App.SimulateRequest("GET", "/index.html");
             Assert.NotNull(LastEvent);
         }
 
@@ -281,10 +208,8 @@ namespace SerilogWeb.Classic.Tests
         // TODO : set LogPostedFormData
         // TODO : set FilterPasswordsInFormData
         // TODO : set FilteredKeywordsInFormData
-        // TODO : set RequestLoggingLevel
-        // TODO : set FormDataLoggingLevel
         // TODO : set ShouldLogPostedFormData
-        // TODO : FormData : multiple keyx
+        // TODO : FormData : multiple keys
         // TODO : FormData : empty value ...
 
     }
