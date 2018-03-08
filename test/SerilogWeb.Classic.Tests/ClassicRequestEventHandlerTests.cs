@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading;
 using Serilog;
@@ -47,7 +48,7 @@ namespace SerilogWeb.Classic.Tests
             var eventHandler = new ClassicRequestEventHandler(app);
 
             eventHandler.OnBeginRequest();
-            app.Response = new FakeHttpResponse(){StatusCode = httpStatus};
+            app.Response = new FakeHttpResponse() { StatusCode = httpStatus };
             Thread.Sleep(sleepTimeMilliseconds); // need some time to have some duration of elapsed !
             eventHandler.OnLogRequest();
 
@@ -87,6 +88,102 @@ namespace SerilogWeb.Classic.Tests
             var evt = LastEvent;
             Assert.NotNull(evt);
             Assert.Equal(requestLoggingLevel, evt.Level);
+        }
+
+        [Fact]
+        public void LogPostedFormData()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+
+            var app = new FakeHttpApplication();
+            app.Request.Unvalidated.Form.Clear();
+            app.Request.Unvalidated.Form.Add(formData);
+            var eventHandler = new ClassicRequestEventHandler(app);
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            var evt = LastEvent;
+            Assert.NotNull(evt);
+
+            var formDataProperty = evt.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            var expected = formData.ToSerilogNameValuePropertySequence();
+            Assert.Equal(expected.ToString(), formDataProperty.ToString());
+        }
+
+        [Fact]
+        public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
+        {
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+
+            var app = new FakeHttpApplication();
+            app.Request.Unvalidated.Form.Clear();
+            var eventHandler = new ClassicRequestEventHandler(app);
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            var evt = LastEvent;
+            Assert.NotNull(evt);
+            Assert.False(evt.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
+        }
+
+        [Fact]
+        public void LogPostedFormDataTakesIntoAccountFormDataLoggingLevel()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Verbose;
+
+            var app = new FakeHttpApplication();
+            var eventHandler = new ClassicRequestEventHandler(app);
+
+            LevelSwitch.MinimumLevel = LogEventLevel.Information;
+            app.Request.Unvalidated.Form.Clear();
+            app.Request.Unvalidated.Form.Add(formData);
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            // logging postedFormData in Verbose only
+            // but current level is Information
+            Assert.NotNull(LastEvent);
+            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
+
+            LevelSwitch.MinimumLevel = LogEventLevel.Debug;
+            app.Request.Unvalidated.Form.Clear();
+            app.Request.Unvalidated.Form.Add(formData);
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+
+            // logging postedFormData in Verbose only
+            // but current level is Debug
+            Assert.NotNull(LastEvent);
+            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
+
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            app.Request.Unvalidated.Form.Clear();
+            app.Request.Unvalidated.Form.Add(formData);
+            eventHandler.OnBeginRequest();
+            app.Response = new FakeHttpResponse();
+            eventHandler.OnLogRequest();
+            var formDataProperty = LastEvent.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            var expected = formData.ToSerilogNameValuePropertySequence();
+            Assert.Equal(expected.ToString(), formDataProperty.ToString());
         }
 
         [Fact]
@@ -185,9 +282,10 @@ namespace SerilogWeb.Classic.Tests
         // TODO : set FilterPasswordsInFormData
         // TODO : set FilteredKeywordsInFormData
         // TODO : set RequestLoggingLevel
-        // TODO : set RequestLoggingLevel
         // TODO : set FormDataLoggingLevel
         // TODO : set ShouldLogPostedFormData
+        // TODO : FormData : multiple keyx
+        // TODO : FormData : empty value ...
 
     }
 }

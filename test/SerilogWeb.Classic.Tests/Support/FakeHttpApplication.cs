@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Specialized;
 using System.Web;
 
 namespace SerilogWeb.Classic.Tests.Support
@@ -54,6 +55,13 @@ namespace SerilogWeb.Classic.Tests.Support
 
         public override string RawUrl => _rawUrl;
         public override string HttpMethod => _httpMethod;
+
+        public override UnvalidatedRequestValuesBase Unvalidated { get; } = new FakeUnvalidatedRequestValues();
+    }
+
+    public class FakeUnvalidatedRequestValues : UnvalidatedRequestValuesBase
+    {
+        public override NameValueCollection Form { get; } = new NameValueCollection();
     }
 
     public class FakeHttpResponse : HttpResponseBase
