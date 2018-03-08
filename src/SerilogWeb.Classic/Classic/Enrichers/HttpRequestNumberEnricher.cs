@@ -31,7 +31,7 @@ namespace SerilogWeb.Classic.Enrichers
         /// </summary>
         public const string HttpRequestNumberPropertyName = "HttpRequestNumber";
 
-        static int LastRequestNumber;
+        static int _lastRequestNumber;
         static readonly string RequestNumberItemName = typeof(HttpRequestNumberEnricher).Name + "+RequestNumber";
 
         /// <summary>
@@ -49,7 +49,7 @@ namespace SerilogWeb.Classic.Enrichers
             int requestNumber;
             var requestNumberItem = HttpContext.Current.Items[RequestNumberItemName];
             if (requestNumberItem == null)
-                HttpContext.Current.Items[RequestNumberItemName] = requestNumber = Interlocked.Increment(ref LastRequestNumber);
+                HttpContext.Current.Items[RequestNumberItemName] = requestNumber = Interlocked.Increment(ref _lastRequestNumber);
             else
                 requestNumber = (int)requestNumberItem;
 
