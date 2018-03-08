@@ -36,14 +36,14 @@ namespace SerilogWeb.Classic.Tests.Support
                 });
         }
 
-        public static void SimulateForm(this FakeHttpApplication self, NameValueCollection formData)
+        public static void SimulateForm(this FakeHttpApplication self, NameValueCollection formData, int responseStatusCode = 200)
         {
             self.SimulateRequest(req =>
             {
                 req.SetHttpMethod("POST");
                 req.Unvalidated.Form.Clear();
                 req.Unvalidated.Form.Add(formData);
-            });
+            }, () => new FakeHttpResponse() { StatusCode = responseStatusCode });
         }
     }
 }

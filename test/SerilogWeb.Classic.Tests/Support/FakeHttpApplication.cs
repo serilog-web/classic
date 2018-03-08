@@ -43,6 +43,8 @@ namespace SerilogWeb.Classic.Tests.Support
         public override Exception[] AllErrors => new Exception[0];
 
         public override HttpRequestBase Request => _fakeHttpApplication.Request;
+
+        public override HttpResponseBase Response => _fakeHttpApplication.Response;
     }
 
     public class FakeHttpRequest : HttpRequestBase

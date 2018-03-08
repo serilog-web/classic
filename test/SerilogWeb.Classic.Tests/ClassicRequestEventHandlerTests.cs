@@ -101,6 +101,85 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void LogPostedFormDataSetToAlwaysIgnoresShouldLogPostedFormData()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => false; // never log form data
+
+            App.SimulateForm(formData);
+
+            Assert.True(LastEvent.Properties.ContainsKey("FormData"), "LastEvent.Properties.ContainsKey('FormData')");
+        }
+
+        [Fact]
+        public void LogPostedFormDataSetToNeverIgnoresShouldLogPostedFormData()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Never;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => true; // always log form data
+
+            App.SimulateForm(formData);
+
+            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "LastEvent.Properties.ContainsKey('FormData')");
+        }
+
+        [Theory]
+        [InlineData(200, false)]
+        [InlineData(302, false)]
+        [InlineData(401, false)]
+        [InlineData(403, false)]
+        [InlineData(404, false)]
+        [InlineData(499, false)]
+        [InlineData(500, true)]
+        [InlineData(502, true)]
+        public void LogPostedFormDataSetToOnlyOnErrorShouldLogPostedFormDataOnErrorStatusCodes(int statusCode, bool shouldLogFormData)
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnlyOnError;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => false;
+
+            App.SimulateForm(formData, statusCode);
+
+            Assert.Equal(shouldLogFormData, LastEvent.Properties.ContainsKey("FormData"));
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void LogPostedFormDataSetOnMatchMustUseResultOfShouldLogPostedFormData(bool shouldLogFormData)
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnMatch;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => shouldLogFormData;
+
+            App.SimulateForm(formData);
+
+            Assert.Equal(shouldLogFormData, LastEvent.Properties.ContainsKey("FormData"));
+        }
+
+
+        [Fact]
         public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
         {
             LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
@@ -202,13 +281,9 @@ namespace SerilogWeb.Classic.Tests
         }
 
         // TODO : Errors / Exceptions etc
-        // TODO : keywords / passwords
-        // TODO : Form Data !
         // TODO : All the options on ApplicationLifecycleModule
-        // TODO : set LogPostedFormData
         // TODO : set FilterPasswordsInFormData
         // TODO : set FilteredKeywordsInFormData
-        // TODO : set ShouldLogPostedFormData
         // TODO : FormData : multiple keys
         // TODO : FormData : empty value ...
 
