@@ -22,7 +22,7 @@ namespace SerilogWeb.Classic.Tests
             ApplicationLifecycleModule.ResetConfiguration();
             App = new FakeHttpApplication();
             Events = new List<LogEvent>();
-            LevelSwitch = new LoggingLevelSwitch();
+            LevelSwitch = new LoggingLevelSwitch(LogEventLevel.Verbose);
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(LevelSwitch)
                 .WriteTo.Sink(new DelegatingSink(ev => Events.Add(ev)))
@@ -41,8 +41,6 @@ namespace SerilogWeb.Classic.Tests
         [InlineData("HEAD", "http://www.example.org", 200)]
         public void BasicRequestLogging(string httpMethod, string rawUrl, int httpStatus)
         {
-            App.Request.SetRawUrl(rawUrl);
-            App.Request.SetHttpMethod(httpMethod);
             var sleepTimeMilliseconds = 4;
 
             App.SimulateRequest(httpMethod, rawUrl, httpStatus, sleepTimeMilliseconds);
@@ -71,7 +69,6 @@ namespace SerilogWeb.Classic.Tests
         [InlineData(LogEventLevel.Fatal)]
         public void RequestLoggingLevel(LogEventLevel requestLoggingLevel)
         {
-            LevelSwitch.MinimumLevel = requestLoggingLevel;
             ApplicationLifecycleModule.RequestLoggingLevel = requestLoggingLevel;
 
             App.SimulateRequest();
@@ -89,7 +86,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
             App.SimulateForm(formData);
@@ -108,7 +105,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
             ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => false; // never log form data
 
@@ -125,7 +122,6 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Never;
             ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => true; // always log form data
 
@@ -150,7 +146,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnlyOnError;
             ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => false;
 
@@ -169,7 +165,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnMatch;
             ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => shouldLogFormData;
 
@@ -182,7 +178,6 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
         {
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
             App.SimulateForm(new NameValueCollection());
@@ -227,10 +222,96 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void FormDataExcludesPasswordKeysByDefault()
+        {
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Information;
+
+            var formData = new NameValueCollection
+            {
+                {"password","Foo" },
+                {"PASSWORD", "Bar" },
+                {"EndWithPassword", "Qux" },
+                {"PasswordPrefix", "Baz" },
+                {"Other", "Value" }
+            };
+            var expectedLoggedData = new NameValueCollection
+            {
+                {"password","********" },
+                {"PASSWORD", "********" },
+                {"EndWithPassword", "********" },
+                {"PasswordPrefix", "********" },
+                {"Other", "Value" },
+            }.ToSerilogNameValuePropertySequence();
+            
+
+            App.SimulateForm(formData);
+
+            var formDataProperty = LastEvent.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            Assert.Equal(expectedLoggedData.ToString(), formDataProperty.ToString());
+        }
+
+        [Fact]
+        public void PasswordFilteringCanBeDisabled()
+        {
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Information;
+            var formData = new NameValueCollection
+            {
+                {"password","Foo" },
+                {"PASSWORD", "Bar" },
+                {"EndWithPassword", "Qux" },
+                {"PasswordPrefix", "Baz" },
+                {"Other", "Value" }
+            };
+
+            ApplicationLifecycleModule.FilterPasswordsInFormData = false;
+
+            App.SimulateForm(formData);
+            var formDataProperty = LastEvent.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            var expectedLoggedData = formData.ToSerilogNameValuePropertySequence();
+            Assert.Equal(expectedLoggedData.ToString(), formDataProperty.ToString());
+        }
+
+        [Fact]
+        public void PasswordBlackListCanBeCustomized()
+        {
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Information;
+            ApplicationLifecycleModule.FilteredKeywordsInFormData = new List<string>
+            {
+                "badword", "forbidden", "restricted"
+            };
+
+            var formData = new NameValueCollection
+            {
+                {"password","Foo" },
+                {"badword", "Bar" },
+                {"VeryBadWord", "Qux" },
+                {"forbidden", "Baz" },
+                {"ThisIsRestricted", "Value" }
+            };
+            var expectedLoggedData = new NameValueCollection
+            {
+                {"password","Foo" },
+                {"badword", "********" },
+                {"VeryBadWord", "********" },
+                {"forbidden", "********" },
+                {"ThisIsRestricted", "********" }
+            }.ToSerilogNameValuePropertySequence();
+
+            App.SimulateForm(formData);
+
+            var formDataProperty = LastEvent.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            Assert.Equal(expectedLoggedData.ToString(), formDataProperty.ToString());
+        }
+
+        [Fact]
         public void EnableDisable()
         {
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
-
             ApplicationLifecycleModule.IsEnabled = false;
             App.SimulateRequest();
             Assert.Null(LastEvent);
@@ -281,9 +362,6 @@ namespace SerilogWeb.Classic.Tests
         }
 
         // TODO : Errors / Exceptions etc
-        // TODO : All the options on ApplicationLifecycleModule
-        // TODO : set FilterPasswordsInFormData
-        // TODO : set FilteredKeywordsInFormData
         // TODO : FormData : multiple keys
         // TODO : FormData : empty value ...
 
