@@ -13,6 +13,7 @@ namespace SerilogWeb.Test
             ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnMatch;
             ApplicationLifecycleModule.ShouldLogPostedFormData = context => context.Response.StatusCode >= 400;
 
+            // ReSharper disable once PossibleNullReferenceException
             ApplicationLifecycleModule.RequestFilter = context => context.Request.Url.PathAndQuery.StartsWith("/__browserLink");
 
             Log.Logger = new LoggerConfiguration()

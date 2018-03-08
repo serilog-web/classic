@@ -41,13 +41,7 @@ namespace SerilogWeb.Classic.Enrichers
         {
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
-            if (HttpContext.Current == null)
-                return;
-
-            if (HttpContextCurrent.Request == null)
-                return;
-
-            if (HttpContextCurrent.Request.Url == null)
+            if (HttpContext.Current?.Request?.Url == null)
                 return;
             
             var requestUrl = HttpContextCurrent.Request.Url.ToString();
