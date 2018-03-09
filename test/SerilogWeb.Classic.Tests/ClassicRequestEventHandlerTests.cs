@@ -98,6 +98,31 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void LogPostedFormDataHandlesMultipleValuesPerKey()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Foo", "Qux" }
+            };
+
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+
+            App.SimulateForm(formData);
+
+            var formDataProperty = LastEvent.Properties["FormData"] as SequenceValue;
+            Assert.NotNull(formDataProperty);
+            Assert.Equal(2, formDataProperty.Elements.Count);
+            var firstKvp = formDataProperty.Elements.First() as StructureValue;
+            Assert.Equal("Foo", firstKvp?.Properties?.FirstOrDefault(p=> p.Name == "Name")?.Value?.LiteralValue());
+            Assert.Equal("Bar", firstKvp?.Properties?.FirstOrDefault(p=> p.Name == "Value")?.Value?.LiteralValue());
+
+            var secondKvp = formDataProperty.Elements.Skip(1).First() as StructureValue;
+            Assert.Equal("Foo", secondKvp?.Properties?.FirstOrDefault(p => p.Name == "Name")?.Value?.LiteralValue());
+            Assert.Equal("Qux", secondKvp?.Properties?.FirstOrDefault(p => p.Name == "Value")?.Value?.LiteralValue());
+        }
+
+        [Fact]
         public void LogPostedFormDataSetToAlwaysIgnoresShouldLogPostedFormData()
         {
             var formData = new NameValueCollection
@@ -362,8 +387,5 @@ namespace SerilogWeb.Classic.Tests
         }
 
         // TODO : Errors / Exceptions etc
-        // TODO : FormData : multiple keys
-        // TODO : FormData : empty value ...
-
     }
 }

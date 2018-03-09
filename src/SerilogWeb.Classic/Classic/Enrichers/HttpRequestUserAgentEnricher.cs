@@ -40,7 +40,7 @@ namespace SerilogWeb.Classic.Enrichers
         {
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
-            if (HttpContext.Current?.Request?.UserAgent == null)
+            if (HttpContext.Current?.Request == null)
                 return;
             
             if (string.IsNullOrWhiteSpace(HttpContext.Current.Request.UserAgent))

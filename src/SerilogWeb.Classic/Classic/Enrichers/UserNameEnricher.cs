@@ -22,7 +22,7 @@ namespace SerilogWeb.Classic.Enrichers
         /// Initializes a new instance of the <see cref="UserNameEnricher"/> class.
         /// </summary>
         public UserNameEnricher()
-            : this("(anonymous)", null)
+            : this("(anonymous)")
         {
 
         }
