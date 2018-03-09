@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Web;
 
 namespace SerilogWeb.Classic.Tests.Support
@@ -21,9 +23,9 @@ namespace SerilogWeb.Classic.Tests.Support
         public void Reset()
         {
             Context = new FakeHttpContext(this);
-            Request = new FakeHttpRequest();
+            Request = new FakeHttpRequest(this);
             Response = null;
-            Server = new FakeHttpServerUtility();
+            Server = new FakeHttpServerUtility(this);
         }
     }
 
@@ -31,6 +33,7 @@ namespace SerilogWeb.Classic.Tests.Support
     public class FakeHttpContext : HttpContextBase
     {
         private readonly FakeHttpApplication _fakeHttpApplication;
+        private bool _errorCleared = false;
 
         public FakeHttpContext(FakeHttpApplication fakeHttpApplication)
         {
@@ -40,15 +43,44 @@ namespace SerilogWeb.Classic.Tests.Support
 
         public override IDictionary Items { get; }
 
-        public override Exception[] AllErrors => new Exception[0];
+        public override Exception[] AllErrors => Errors.ToArray();
 
         public override HttpRequestBase Request => _fakeHttpApplication.Request;
 
         public override HttpResponseBase Response => _fakeHttpApplication.Response;
+
+        public override void AddError(Exception errorInfo)
+        {
+            Errors.Add(errorInfo);
+        }
+
+        public override Exception Error
+        {
+            get
+            {
+                // trying to mimick the behavior of System.Web.HttpContext
+                if (_errorCleared) return null;
+                return Errors.FirstOrDefault();
+            }
+        }
+
+        private List<Exception> Errors { get; } = new List<Exception>();
+
+        public override void ClearError()
+        {
+            _errorCleared = true;
+        }
     }
 
     public class FakeHttpRequest : HttpRequestBase
     {
+        private readonly FakeHttpApplication _httpApplication;
+
+        public FakeHttpRequest(FakeHttpApplication httpApplication)
+        {
+            _httpApplication = httpApplication ?? throw new ArgumentNullException(nameof(httpApplication));
+        }
+
         private string _rawUrl = "http://www.example.com";
         private string _httpMethod = "GET";
 
@@ -80,9 +112,16 @@ namespace SerilogWeb.Classic.Tests.Support
 
     public class FakeHttpServerUtility : HttpServerUtilityBase
     {
+        private readonly FakeHttpApplication _httpApplication;
+
+        public FakeHttpServerUtility(FakeHttpApplication httpApplication)
+        {
+            _httpApplication = httpApplication ?? throw new ArgumentNullException(nameof(httpApplication));
+        }
+
         public override Exception GetLastError()
         {
-            return null;
+            return _httpApplication.Context.Error;
         }
     }
 }

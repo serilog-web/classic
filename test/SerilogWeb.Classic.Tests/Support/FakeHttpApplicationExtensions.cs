@@ -7,7 +7,7 @@ namespace SerilogWeb.Classic.Tests.Support
 {
     public static class FakeHttpApplicationExtensions
     {
-        private static void SimulateRequest(this FakeHttpApplication self, Action<FakeHttpRequest> customizeRequest,
+        public static void SimulateRequest(this FakeHttpApplication self, Action<FakeHttpRequest> customizeRequest,
             Func<HttpResponseBase> responseFactory = null)
         {
             Func<HttpResponseBase> createResponse = responseFactory ?? (() => new FakeHttpResponse());

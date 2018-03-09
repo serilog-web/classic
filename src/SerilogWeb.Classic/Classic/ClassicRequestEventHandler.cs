@@ -89,7 +89,6 @@ namespace SerilogWeb.Classic
             return value;
         }
 
-
         private static Func<HttpContextBase, bool> FormLoggingStrategy
         {
             get

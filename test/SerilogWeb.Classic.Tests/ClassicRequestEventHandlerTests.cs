@@ -122,6 +122,53 @@ namespace SerilogWeb.Classic.Tests
             Assert.Equal("Qux", secondKvp?.Properties?.FirstOrDefault(p => p.Name == "Value")?.Value?.LiteralValue());
         }
 
+
+        [Fact]
+        public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
+        {
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+
+            App.SimulateForm(new NameValueCollection());
+
+            var evt = LastEvent;
+            Assert.NotNull(evt);
+            Assert.False(evt.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
+        }
+
+        [Fact]
+        public void LogPostedFormDataTakesIntoAccountFormDataLoggingLevel()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" }
+            };
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Verbose;
+
+            LevelSwitch.MinimumLevel = LogEventLevel.Information;
+            App.SimulateForm(formData);
+
+            // logging postedFormData in Verbose only
+            // but current level is Information
+            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
+
+            LevelSwitch.MinimumLevel = LogEventLevel.Debug;
+            App.SimulateForm(formData);
+
+            // logging postedFormData in Verbose only
+            // but current level is Debug
+            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
+
+            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            App.SimulateForm(formData);
+
+            var formDataProperty = LastEvent.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            var expected = formData.ToSerilogNameValuePropertySequence();
+            Assert.Equal(expected.ToString(), formDataProperty.ToString());
+        }
+
         [Fact]
         public void LogPostedFormDataSetToAlwaysIgnoresShouldLogPostedFormData()
         {
@@ -197,53 +244,6 @@ namespace SerilogWeb.Classic.Tests
             App.SimulateForm(formData);
 
             Assert.Equal(shouldLogFormData, LastEvent.Properties.ContainsKey("FormData"));
-        }
-
-
-        [Fact]
-        public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
-        {
-            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
-
-            App.SimulateForm(new NameValueCollection());
-
-            var evt = LastEvent;
-            Assert.NotNull(evt);
-            Assert.False(evt.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
-        }
-
-        [Fact]
-        public void LogPostedFormDataTakesIntoAccountFormDataLoggingLevel()
-        {
-            var formData = new NameValueCollection
-            {
-                {"Foo","Bar" },
-                {"Qux", "Baz" }
-            };
-            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
-            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Verbose;
-
-            LevelSwitch.MinimumLevel = LogEventLevel.Information;
-            App.SimulateForm(formData);
-
-            // logging postedFormData in Verbose only
-            // but current level is Information
-            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
-
-            LevelSwitch.MinimumLevel = LogEventLevel.Debug;
-            App.SimulateForm(formData);
-
-            // logging postedFormData in Verbose only
-            // but current level is Debug
-            Assert.False(LastEvent.Properties.ContainsKey("FormData"), "evt.Properties.ContainsKey('FormData')");
-
-            LevelSwitch.MinimumLevel = LogEventLevel.Verbose;
-            App.SimulateForm(formData);
-
-            var formDataProperty = LastEvent.Properties["FormData"];
-            Assert.NotNull(formDataProperty);
-            var expected = formData.ToSerilogNameValuePropertySequence();
-            Assert.Equal(expected.ToString(), formDataProperty.ToString());
         }
 
         [Fact]
@@ -386,6 +386,59 @@ namespace SerilogWeb.Classic.Tests
             Assert.NotNull(LastEvent);
         }
 
-        // TODO : Errors / Exceptions etc
+        [Theory]
+        [InlineData(500, true)]
+        [InlineData(501, true)]
+        [InlineData(499, false)]
+        public void StatusCodeBiggerThan500AreLoggedAsError(int httpStatusCode, bool isLoggedAsError)
+        {
+            App.SimulateRequest(httpStatusCode:httpStatusCode);
+            
+            Assert.NotNull(LastEvent);
+            Assert.Equal(isLoggedAsError, LastEvent.Level == LogEventLevel.Error);
+        }
+
+        [Fact]
+        public void RequestWithServerLastErrorAreLoggedAsErrorWithException()
+        {
+            var theError = new InvalidOperationException("Epic fail", new NotImplementedException());
+            App.SimulateRequest(
+                (req) => {},
+                () =>
+                {
+                    App.Context.AddError(theError);
+                    Assert.NotNull(App.Server.GetLastError());
+                    return new FakeHttpResponse();
+                });
+
+            Assert.NotNull(LastEvent);
+            Assert.Equal(LogEventLevel.Error, LastEvent.Level);
+            Assert.Same(theError, LastEvent.Exception);
+        }
+
+        [Fact]
+        public void RequestWithoutServerLastErrorButStatusCode500AreLoggedAsErrorWithLastAppErrorInException()
+        {
+            var firstError = new InvalidOperationException("Epic fail #1", new NotImplementedException());
+            var secondError = new InvalidOperationException("Epic fail #2", new NotImplementedException());
+            App.SimulateRequest(
+                (req) => { },
+                () =>
+                {
+                    App.Context.AddError(firstError);
+                    App.Context.AddError(secondError);
+                    Assert.NotNull(App.Server.GetLastError());
+                    App.Context.ClearError();
+                    Assert.Null(App.Server.GetLastError());
+                    return new FakeHttpResponse()
+                    {
+                        StatusCode = 500
+                    };
+                });
+
+            Assert.NotNull(LastEvent);
+            Assert.Equal(LogEventLevel.Error, LastEvent.Level);
+            Assert.Same(secondError, LastEvent.Exception);
+        }
     }
 }
