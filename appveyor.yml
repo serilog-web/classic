@@ -1,7 +1,7 @@
 version: '{build}'
 image: Visual Studio 2017
 build_script:
-- ps: ./Build.ps1 -majorMinor "3.0" -patch "$env:APPVEYOR_BUILD_VERSION" -customLogger "C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+- ps: ./Build.ps1 -majorMinor "4.0" -patch "$env:APPVEYOR_BUILD_VERSION" -customLogger "C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 artifacts:
 - path: SerilogWeb.*.nupkg
 deploy:
