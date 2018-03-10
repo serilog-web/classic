@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SerilogWeb.Classic.Tests", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "assets", "assets", "{DBD65543-5514-465B-8DE4-6C8866805A8F}"
 	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
+		CHANGES.md = CHANGES.md
 		assets\CommonAssemblyInfo.cs = assets\CommonAssemblyInfo.cs
 		assets\SerilogWeb.snk = assets\SerilogWeb.snk
 	EndProjectSection
