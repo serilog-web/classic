@@ -18,7 +18,7 @@ namespace SerilogWeb.Test
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.Trace()
+                .WriteTo.Trace(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception} {Properties:j}" )
                 .CreateLogger();
         }
     }
