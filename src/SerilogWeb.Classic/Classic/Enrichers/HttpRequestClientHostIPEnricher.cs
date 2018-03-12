@@ -53,7 +53,9 @@ namespace SerilogWeb.Classic.Enrichers
         /// <summary>
         /// The property name added to enriched log events.
         /// </summary>
+        // ReSharper disable InconsistentNaming
         public const string HttpRequestClientHostIPPropertyName = "HttpRequestClientHostIP";
+        // ReSharper restore InconsistentNaming
 
         #region Implementation of ILogEventEnricher
 
@@ -98,8 +100,8 @@ namespace SerilogWeb.Classic.Enrichers
                 userHostAddress = userHostAddress.Split(',').First().Trim();
             }
 
-            var httpRequestClientHostIPProperty = new LogEventProperty(HttpRequestClientHostIPPropertyName, new ScalarValue(userHostAddress));
-            logEvent.AddPropertyIfAbsent(httpRequestClientHostIPProperty);
+            var httpRequestClientHostIpProperty = new LogEventProperty(HttpRequestClientHostIPPropertyName, new ScalarValue(userHostAddress));
+            logEvent.AddPropertyIfAbsent(httpRequestClientHostIpProperty);
         }
 
         #endregion

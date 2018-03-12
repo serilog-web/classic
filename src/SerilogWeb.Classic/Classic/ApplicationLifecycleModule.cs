@@ -13,13 +13,10 @@
 // limitations under the License.
 
 using System;
-using System.Linq;
 using System.Web;
 using Serilog;
 using Serilog.Events;
-using SerilogWeb.Classic.Enrichers;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace SerilogWeb.Classic
 {
@@ -28,19 +25,10 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
+        private static readonly Func<HttpContextBase, bool> AlwaysFalse = context => false;
 
-        static LogPostedFormDataOption _logPostedFormData = LogPostedFormDataOption.Never;
-        static bool _isEnabled = true;
-        static bool _filterPasswordsInFormData = true;
-        static IEnumerable<string> _filteredKeywords = new[] { "password" };
-        static LogEventLevel _requestLoggingLevel = LogEventLevel.Information;
-        static LogEventLevel _formDataLoggingLevel = LogEventLevel.Debug;
-        static readonly Func<HttpContext, bool> AlwaysTrue = context => true;
-        static readonly Func<HttpContext, bool> AlwaysFalse = context => false;
-        static readonly Func<HttpContext, bool> DefaultErrorStrategy = context => context.Response.StatusCode >= 500;
-        static Func<HttpContext, bool> _requestFilter = AlwaysFalse;
-        static Func<HttpContext, bool> _shouldLogPostedFormData = AlwaysFalse;
+        static Func<HttpContextBase, bool> _requestFilter = AlwaysFalse;
+        static Func<HttpContextBase, bool> _shouldLogPostedFormData = AlwaysFalse;
 
         static ILogger _logger;
 
@@ -51,17 +39,8 @@ namespace SerilogWeb.Classic
         /// <exception cref="T:System.ArgumentNullException"/>
         public static ILogger Logger
         {
-            get
-            {
-                return (_logger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
-            }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                _logger = value;
-            }
+            get => (_logger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
+            set => _logger = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -77,16 +56,10 @@ namespace SerilogWeb.Classic
         /// Custom predicate to filter which requests are logged. If the value
         /// returned is true then the request will be filtered and not logged.        
         /// </summary>
-        public static Func<HttpContext, bool> RequestFilter
+        public static Func<HttpContextBase, bool> RequestFilter
         {
-            get { return _requestFilter; }
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                _requestFilter = value;
-            }
+            get => _requestFilter;
+            set => _requestFilter = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -98,76 +71,46 @@ namespace SerilogWeb.Classic
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
         /// </summary>
-        public static LogPostedFormDataOption LogPostedFormData
-        {
-            get { return _logPostedFormData; }
-            set { _logPostedFormData = value; }
-        }
+        public static LogPostedFormDataOption LogPostedFormData { get; set; } = LogPostedFormDataOption.Never;
 
         /// <summary>
         /// When set to true (the default), any field containing password will 
         /// not have its value logged when DebugLogPostedFormData is enabled
         /// </summary>
-        public static bool FilterPasswordsInFormData
-        {
-            get { return _filterPasswordsInFormData; }
-            set { _filterPasswordsInFormData = value; }
-        }
+        public static bool FilterPasswordsInFormData { get; set; } = true;
 
         /// <summary>
         /// When FilterPasswordsInFormData is true, any field containing keywords in this list will 
         /// not have its value logged when DebugLogPostedFormData is enabled
         /// </summary>
-        public static IEnumerable<String> FilteredKeywordsInFormData
-        {
-            get { return _filteredKeywords; }
-            set { _filteredKeywords = value; }
-        }
+        public static IEnumerable<String> FilteredKeywordsInFormData { get; set; } = new[] { "password" };
 
         /// <summary>
         /// When set to true, request details and errors will be logged. The default
         /// is true.
         /// </summary>
-        public static bool IsEnabled
-        {
-            get { return _isEnabled; }
-            set { _isEnabled = value; }
-        }
+        public static bool IsEnabled { get; set; } = true;
 
         /// <summary>
         /// The level at which to log HTTP requests. The default is Information.
         /// </summary>
-        public static LogEventLevel RequestLoggingLevel
-        {
-            get { return _requestLoggingLevel; }
-            set { _requestLoggingLevel = value; }
-        }
+        public static LogEventLevel RequestLoggingLevel { get; set; } = LogEventLevel.Information;
 
 
         /// <summary>
         /// The level at which to log form values
         /// </summary>
-        public static LogEventLevel FormDataLoggingLevel
-        {
-            get { return _formDataLoggingLevel; }
-            set { _formDataLoggingLevel = value; }
-        }
+        public static LogEventLevel FormDataLoggingLevel { get; set; } = LogEventLevel.Debug;
 
         /// <summary>
         /// Custom predicate to determine whether form data should be logged. 
         /// <see cref="LogPostedFormData"/> must be set to OnMatch for this to execute.
         /// </summary>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public static Func<HttpContext, bool> ShouldLogPostedFormData
+        public static Func<HttpContextBase, bool> ShouldLogPostedFormData
         {
-            get { return _shouldLogPostedFormData;}
-            set
-            {
-                if (value == null)
-                    throw new ArgumentNullException(nameof(value));
-
-                _shouldLogPostedFormData = value;
-            }
+            get => _shouldLogPostedFormData;
+            set => _shouldLogPostedFormData = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -176,92 +119,35 @@ namespace SerilogWeb.Classic
         /// <param name="application">An <see cref="T:System.Web.HttpApplication"/> that provides access to the methods, properties, and events common to all application objects within an ASP.NET application </param>
         public void Init(HttpApplication application)
         {
+            var appWrapper = new HttpApplicationWrapper(application);
+            var eventHandler = new ClassicRequestEventHandler(appWrapper);
+
             application.BeginRequest += (sender, args) =>
             {
-                if(_isEnabled && application.Context != null)
-                {
-                    application.Context.Items[StopWatchKey] = Stopwatch.StartNew();
-                }                
+                eventHandler.OnBeginRequest();
             };
 
             application.LogRequest += (sender, args) =>
             {
-                if (_isEnabled && application.Context != null)
-                {
-                    var stopwatch = application.Context.Items[StopWatchKey] as Stopwatch;
-                    if (stopwatch == null)
-                        return;
-
-                    stopwatch.Stop();
-
-                    var request = HttpContextCurrent.Request;
-                    if (request == null || _requestFilter(application.Context))
-                        return;
-
-                    var error = application.Server.GetLastError();
-                    var level = error != null || application.Response.StatusCode >= 500 ? LogEventLevel.Error : _requestLoggingLevel;
-
-                    if (level == LogEventLevel.Error && error == null && application.Context.AllErrors != null)
-                    {
-                        error = application.Context.AllErrors.LastOrDefault();
-                    }
-
-                    var logger = Logger;
-                    if (logger.IsEnabled(_formDataLoggingLevel) && FormLoggingStrategy(application.Context))
-                    {
-                        var form = request.Unvalidated.Form;
-                        if (form.HasKeys())
-                        {
-                            var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
-                            logger = logger.ForContext("FormData", formData, true);
-                        }
-                    }
-
-                    logger.Write(
-                        level,
-                        error,
-                        "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms", 
-                        request.HttpMethod, 
-                        request.RawUrl, 
-                        application.Response.StatusCode, 
-                        stopwatch.ElapsedMilliseconds);
-                }                
+                eventHandler.OnLogRequest();
             };
         }
 
-        static Func<HttpContext, bool> FormLoggingStrategy
-        {
-            get
-            {
-                switch (_logPostedFormData)
-                {
-                    case LogPostedFormDataOption.Never:
-                        return AlwaysFalse;
-                    case LogPostedFormDataOption.Always:
-                        return AlwaysTrue;
-                    case LogPostedFormDataOption.OnlyOnError:
-                        return DefaultErrorStrategy;
-                    case LogPostedFormDataOption.OnMatch:
-                        return _shouldLogPostedFormData;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-        }
-
         /// <summary>
-        /// Filters configured keywords from being logged
+        /// Allows to reset the module to its default configuration.
+        /// Useful when testing !
         /// </summary>
-        /// <param name="key">Key of the pair</param>
-        /// <param name="value">Value of the pair</param>
-        static string FilterPasswords(string key, string value)
+        internal static void ResetConfiguration()
         {
-            if (_filterPasswordsInFormData && _filteredKeywords.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
-            {
-                return "********";
-            }
-
-            return value;
+            _logger = null;
+            _requestFilter = AlwaysFalse;
+            _shouldLogPostedFormData = AlwaysFalse;
+            LogPostedFormData = LogPostedFormDataOption.Never;
+            FilterPasswordsInFormData = true;
+            FilteredKeywordsInFormData = new[] { "password" };
+            IsEnabled = true;
+            RequestLoggingLevel = LogEventLevel.Information;
+            FormDataLoggingLevel = LogEventLevel.Debug;
         }
 
         /// <summary>

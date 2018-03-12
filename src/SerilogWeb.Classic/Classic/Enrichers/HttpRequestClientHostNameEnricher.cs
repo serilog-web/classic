@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 

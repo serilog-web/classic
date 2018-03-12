@@ -9,7 +9,7 @@ namespace SerilogWeb.Test
         {
             Log.Information("Page viewed!");
 
-            // throw new InvalidOperationException("Unlucky this time!");
+             //throw new InvalidOperationException("Unlucky this time!");
         }
 
         protected void Fail(object sender, EventArgs e)

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SerilogWeb.Classic
+﻿namespace SerilogWeb.Classic
 {
     /// <summary>
     /// Describes options for logging form request data
