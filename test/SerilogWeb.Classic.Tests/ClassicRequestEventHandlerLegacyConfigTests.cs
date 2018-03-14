@@ -10,16 +10,16 @@ using Xunit;
 
 namespace SerilogWeb.Classic.Tests
 {
-    public class ClassicRequestEventHandlerTests : IDisposable
+    public class ClassicRequestEventHandlerLegacyConfigTests : IDisposable
     {
         private LoggingLevelSwitch LevelSwitch { get; }
         private List<LogEvent> Events { get; }
         private LogEvent LastEvent => Events.LastOrDefault();
         private FakeHttpApplication App { get; }
 
-        public ClassicRequestEventHandlerTests()
+        public ClassicRequestEventHandlerLegacyConfigTests()
         {
-            SerilogWebModule.Configuration.Reset();
+            ApplicationLifecycleModule.ResetConfiguration();
             App = new FakeHttpApplication();
             Events = new List<LogEvent>();
             LevelSwitch = new LoggingLevelSwitch(LogEventLevel.Verbose);
@@ -32,7 +32,7 @@ namespace SerilogWeb.Classic.Tests
         public void Dispose()
         {
             Log.CloseAndFlush();
-            SerilogWebModule.Configuration.Reset();
+            ApplicationLifecycleModule.ResetConfiguration();
         }
 
         [Theory]
@@ -58,8 +58,6 @@ namespace SerilogWeb.Classic.Tests
 
             var recordedElapsed = (long)evt.Properties["ElapsedMilliseconds"].LiteralValue();
             Assert.True(recordedElapsed >= sleepTimeMilliseconds, "recordedElapsed >= sleepTimeMilliseconds");
-
-            Assert.False(evt.Properties.ContainsKey("FormData"), "no formData in default configuration");
         }
 
         [Theory]
@@ -71,7 +69,7 @@ namespace SerilogWeb.Classic.Tests
         [InlineData(LogEventLevel.Fatal)]
         public void RequestLoggingLevel(LogEventLevel requestLoggingLevel)
         {
-            SerilogWebModule.Configuration.LogAtLevel(requestLoggingLevel);
+            ApplicationLifecycleModule.RequestLoggingLevel = requestLoggingLevel;
 
             App.SimulateRequest();
 
@@ -88,8 +86,8 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-
-            SerilogWebModule.Configuration.EnableFormDataLogging();
+            
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
             App.SimulateForm(formData);
 
@@ -108,7 +106,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo", "Qux" }
             };
 
-            SerilogWebModule.Configuration.EnableFormDataLogging();
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
             App.SimulateForm(formData);
 
@@ -116,8 +114,8 @@ namespace SerilogWeb.Classic.Tests
             Assert.NotNull(formDataProperty);
             Assert.Equal(2, formDataProperty.Elements.Count);
             var firstKvp = formDataProperty.Elements.First() as StructureValue;
-            Assert.Equal("Foo", firstKvp?.Properties?.FirstOrDefault(p => p.Name == "Name")?.Value?.LiteralValue());
-            Assert.Equal("Bar", firstKvp?.Properties?.FirstOrDefault(p => p.Name == "Value")?.Value?.LiteralValue());
+            Assert.Equal("Foo", firstKvp?.Properties?.FirstOrDefault(p=> p.Name == "Name")?.Value?.LiteralValue());
+            Assert.Equal("Bar", firstKvp?.Properties?.FirstOrDefault(p=> p.Name == "Value")?.Value?.LiteralValue());
 
             var secondKvp = formDataProperty.Elements.Skip(1).First() as StructureValue;
             Assert.Equal("Foo", secondKvp?.Properties?.FirstOrDefault(p => p.Name == "Name")?.Value?.LiteralValue());
@@ -128,7 +126,7 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
         {
-            SerilogWebModule.Configuration.EnableFormDataLogging();
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
 
             App.SimulateForm(new NameValueCollection());
 
@@ -145,7 +143,8 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.AtLevel(LogEventLevel.Verbose));
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Verbose;
 
             LevelSwitch.MinimumLevel = LogEventLevel.Information;
             App.SimulateForm(formData);
@@ -171,7 +170,7 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
-        public void EnableFormDataLoggingShouldLogPostedFormData()
+        public void LogPostedFormDataSetToAlwaysIgnoresShouldLogPostedFormData()
         {
             var formData = new NameValueCollection
             {
@@ -179,7 +178,8 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            SerilogWebModule.Configuration.EnableFormDataLogging();
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => false; // never log form data
 
             App.SimulateForm(formData);
 
@@ -187,15 +187,15 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
-        public void DisableFormDataLoggingShouldNotLogPostedFormData()
+        public void LogPostedFormDataSetToNeverIgnoresShouldLogPostedFormData()
         {
             var formData = new NameValueCollection
             {
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-
-            SerilogWebModule.Configuration.DisableFormDataLogging();
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Never;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => true; // always log form data
 
             App.SimulateForm(formData);
 
@@ -219,7 +219,8 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.OnlyOnError());
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnlyOnError;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => false;
 
             App.SimulateForm(formData, statusCode);
 
@@ -237,7 +238,8 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.OnMatch(ctx => shouldLogFormData));
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnMatch;
+            ApplicationLifecycleModule.ShouldLogPostedFormData = ctx => shouldLogFormData;
 
             App.SimulateForm(formData);
 
@@ -247,7 +249,8 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void FormDataExcludesPasswordKeysByDefault()
         {
-            SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.AtLevel(LogEventLevel.Information));
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Information;
 
             var formData = new NameValueCollection
             {
@@ -265,7 +268,7 @@ namespace SerilogWeb.Classic.Tests
                 {"PasswordPrefix", "********" },
                 {"Other", "Value" },
             }.ToSerilogNameValuePropertySequence();
-
+            
 
             App.SimulateForm(formData);
 
@@ -277,11 +280,8 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void PasswordFilteringCanBeDisabled()
         {
-            SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg
-                .AtLevel(LogEventLevel.Information)
-                .DisablePasswordFiltering()
-            );
-
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Information;
             var formData = new NameValueCollection
             {
                 {"password","Foo" },
@@ -290,6 +290,8 @@ namespace SerilogWeb.Classic.Tests
                 {"PasswordPrefix", "Baz" },
                 {"Other", "Value" }
             };
+
+            ApplicationLifecycleModule.FilterPasswordsInFormData = false;
 
             App.SimulateForm(formData);
             var formDataProperty = LastEvent.Properties["FormData"];
@@ -301,13 +303,12 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void PasswordBlackListCanBeCustomized()
         {
-            SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg
-                .AtLevel(LogEventLevel.Information)
-                .FilterKeywords(new List<string>
-                    {
-                        "badword", "forbidden", "restricted"
-                    }
-            ));
+            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.Always;
+            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Information;
+            ApplicationLifecycleModule.FilteredKeywordsInFormData = new List<string>
+            {
+                "badword", "forbidden", "restricted"
+            };
 
             var formData = new NameValueCollection
             {
@@ -336,11 +337,11 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void EnableDisable()
         {
-            SerilogWebModule.Configuration.Disable();
+            ApplicationLifecycleModule.IsEnabled = false;
             App.SimulateRequest();
             Assert.Null(LastEvent);
 
-            SerilogWebModule.Configuration.Enable();
+            ApplicationLifecycleModule.IsEnabled = true;
             App.SimulateRequest();
             Assert.NotNull(LastEvent);
         }
@@ -353,7 +354,7 @@ namespace SerilogWeb.Classic.Tests
                 .WriteTo.Sink(new DelegatingSink(ev => myLogEvents.Add(ev)))
                 .CreateLogger())
             {
-                SerilogWebModule.Configuration.UseLogger(myLogger);
+                ApplicationLifecycleModule.Logger = myLogger;
 
                 App.SimulateRequest();
 
@@ -371,9 +372,9 @@ namespace SerilogWeb.Classic.Tests
         {
             var ignoredPath = "/ignoreme/";
             var ignoredMethod = "HEAD";
-            SerilogWebModule.Configuration.IgnoreRequestsMatching(ctx =>
+            ApplicationLifecycleModule.RequestFilter = ctx =>
                 ctx.Request.RawUrl.ToLowerInvariant().Contains(ignoredPath.ToLowerInvariant())
-                || ctx.Request.HttpMethod == ignoredMethod);
+                || ctx.Request.HttpMethod == ignoredMethod;
 
             App.SimulateRequest("GET", $"{ignoredPath}widgets");
             Assert.Null(LastEvent); // should be filtered out
@@ -391,8 +392,8 @@ namespace SerilogWeb.Classic.Tests
         [InlineData(499, false)]
         public void StatusCodeBiggerThan500AreLoggedAsError(int httpStatusCode, bool isLoggedAsError)
         {
-            App.SimulateRequest(httpStatusCode: httpStatusCode);
-
+            App.SimulateRequest(httpStatusCode:httpStatusCode);
+            
             Assert.NotNull(LastEvent);
             Assert.Equal(isLoggedAsError, LastEvent.Level == LogEventLevel.Error);
         }
@@ -402,7 +403,7 @@ namespace SerilogWeb.Classic.Tests
         {
             var theError = new InvalidOperationException("Epic fail", new NotImplementedException());
             App.SimulateRequest(
-                (req) => { },
+                (req) => {},
                 () =>
                 {
                     App.Context.AddError(theError);

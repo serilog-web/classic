@@ -25,12 +25,7 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        private static readonly Func<HttpContextBase, bool> AlwaysFalse = context => false;
-
-        static Func<HttpContextBase, bool> _requestFilter = AlwaysFalse;
-        static Func<HttpContextBase, bool> _shouldLogPostedFormData = AlwaysFalse;
-
-        static ILogger _logger;
+        private static SerilogWebModuleConfiguration Config => SerilogWebModule.Configuration;
 
         /// <summary>
         /// The globally-shared logger.
@@ -39,8 +34,8 @@ namespace SerilogWeb.Classic
         /// <exception cref="T:System.ArgumentNullException"/>
         public static ILogger Logger
         {
-            get => (_logger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
-            set => _logger = value ?? throw new ArgumentNullException(nameof(value));
+            get => (Config.CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
+            set => Config.CustomLogger = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -58,8 +53,8 @@ namespace SerilogWeb.Classic
         /// </summary>
         public static Func<HttpContextBase, bool> RequestFilter
         {
-            get => _requestFilter;
-            set => _requestFilter = value ?? throw new ArgumentNullException(nameof(value));
+            get => Config.RequestFilter;
+            set => Config.RequestFilter = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -71,36 +66,60 @@ namespace SerilogWeb.Classic
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
         /// </summary>
-        public static LogPostedFormDataOption LogPostedFormData { get; set; } = LogPostedFormDataOption.Never;
+        public static LogPostedFormDataOption LogPostedFormData
+        {
+            get => Config.LogPostedFormData;
+            set => Config.LogPostedFormData = value;
+        }
 
         /// <summary>
         /// When set to true (the default), any field containing password will 
         /// not have its value logged when DebugLogPostedFormData is enabled
         /// </summary>
-        public static bool FilterPasswordsInFormData { get; set; } = true;
+        public static bool FilterPasswordsInFormData
+        {
+            get => Config.FilterPasswordsInFormData;
+            set => Config.FilterPasswordsInFormData = value;
+        }
 
         /// <summary>
         /// When FilterPasswordsInFormData is true, any field containing keywords in this list will 
         /// not have its value logged when DebugLogPostedFormData is enabled
         /// </summary>
-        public static IEnumerable<String> FilteredKeywordsInFormData { get; set; } = new[] { "password" };
+        public static IEnumerable<String> FilteredKeywordsInFormData
+        {
+            get => Config.FilteredKeywordsInFormData;
+            set => Config.FilteredKeywordsInFormData = value;
+        }
 
         /// <summary>
         /// When set to true, request details and errors will be logged. The default
         /// is true.
         /// </summary>
-        public static bool IsEnabled { get; set; } = true;
+        public static bool IsEnabled
+        {
+            get => Config.IsEnabled;
+            set => Config.IsEnabled = value;
+        }
 
         /// <summary>
         /// The level at which to log HTTP requests. The default is Information.
         /// </summary>
-        public static LogEventLevel RequestLoggingLevel { get; set; } = LogEventLevel.Information;
+        public static LogEventLevel RequestLoggingLevel
+        {
+            get => Config.RequestLoggingLevel;
+            set => Config.RequestLoggingLevel = value;
+        }
 
 
         /// <summary>
         /// The level at which to log form values
         /// </summary>
-        public static LogEventLevel FormDataLoggingLevel { get; set; } = LogEventLevel.Debug;
+        public static LogEventLevel FormDataLoggingLevel
+        {
+            get => Config.FormDataLoggingLevel;
+            set => Config.FormDataLoggingLevel = value;
+        }
 
         /// <summary>
         /// Custom predicate to determine whether form data should be logged. 
@@ -109,8 +128,8 @@ namespace SerilogWeb.Classic
         /// <exception cref="System.ArgumentNullException"></exception>
         public static Func<HttpContextBase, bool> ShouldLogPostedFormData
         {
-            get => _shouldLogPostedFormData;
-            set => _shouldLogPostedFormData = value ?? throw new ArgumentNullException(nameof(value));
+            get => Config.ShouldLogPostedFormData;
+            set => Config.ShouldLogPostedFormData = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         /// <summary>
@@ -139,15 +158,7 @@ namespace SerilogWeb.Classic
         /// </summary>
         internal static void ResetConfiguration()
         {
-            _logger = null;
-            _requestFilter = AlwaysFalse;
-            _shouldLogPostedFormData = AlwaysFalse;
-            LogPostedFormData = LogPostedFormDataOption.Never;
-            FilterPasswordsInFormData = true;
-            FilteredKeywordsInFormData = new[] { "password" };
-            IsEnabled = true;
-            RequestLoggingLevel = LogEventLevel.Information;
-            FormDataLoggingLevel = LogEventLevel.Debug;
+            Config.Reset();
         }
 
         /// <summary>
