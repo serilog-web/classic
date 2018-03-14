@@ -7,7 +7,7 @@ using Serilog.Events;
 
 namespace SerilogWeb.Classic
 {
-    internal class ClassicRequestEventHandler
+    internal class WebRequestLoggingHandler
     {
         const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
 
@@ -17,9 +17,9 @@ namespace SerilogWeb.Classic
 
         // ReSharper disable once InconsistentNaming
         private readonly IHttpApplication application;
-        private readonly SerilogWebModuleConfiguration _configuration;
+        private readonly SerilogWebClassicConfiguration _configuration;
 
-        public ClassicRequestEventHandler(IHttpApplication application, SerilogWebModuleConfiguration configuration)
+        public WebRequestLoggingHandler(IHttpApplication application, SerilogWebClassicConfiguration configuration)
         {
             this.application = application ?? throw new ArgumentNullException(nameof(application));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
