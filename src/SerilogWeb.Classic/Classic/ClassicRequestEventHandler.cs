@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq;
 using System.Web;
+using Serilog;
 using Serilog.Events;
 
 namespace SerilogWeb.Classic
@@ -16,15 +17,17 @@ namespace SerilogWeb.Classic
 
         // ReSharper disable once InconsistentNaming
         private readonly IHttpApplication application;
+        private readonly SerilogWebModuleConfiguration _configuration;
 
-        public ClassicRequestEventHandler(IHttpApplication application)
+        public ClassicRequestEventHandler(IHttpApplication application, SerilogWebModuleConfiguration configuration)
         {
             this.application = application ?? throw new ArgumentNullException(nameof(application));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
 
         internal void OnBeginRequest()
         {
-            if (ApplicationLifecycleModule.IsEnabled && application.Context != null)
+            if (_configuration.IsEnabled && application.Context != null)
             {
                 application.Context.Items[StopWatchKey] = Stopwatch.StartNew();
             }
@@ -32,7 +35,7 @@ namespace SerilogWeb.Classic
 
         internal void OnLogRequest()
         {
-            if (!ApplicationLifecycleModule.IsEnabled || application.Context == null)
+            if (!_configuration.IsEnabled || application.Context == null)
                 return;
 
             var stopwatch = application.Context.Items[StopWatchKey] as Stopwatch;
@@ -42,19 +45,19 @@ namespace SerilogWeb.Classic
             stopwatch.Stop();
 
             var request = application.Request;
-            if (request == null || ApplicationLifecycleModule.RequestFilter(application.Context))
+            if (request == null || _configuration.RequestFilter(application.Context))
                 return;
 
             var error = application.Server.GetLastError();
-            var level = error != null || application.Response.StatusCode >= 500 ? LogEventLevel.Error : ApplicationLifecycleModule.RequestLoggingLevel;
+            var level = error != null || application.Response.StatusCode >= 500 ? LogEventLevel.Error : _configuration.RequestLoggingLevel;
 
             if (level == LogEventLevel.Error && error == null && application.Context.AllErrors != null)
             {
                 error = application.Context.AllErrors.LastOrDefault();
             }
 
-            var logger = ApplicationLifecycleModule.Logger;
-            if (logger.IsEnabled(ApplicationLifecycleModule.FormDataLoggingLevel) && FormLoggingStrategy(application.Context))
+            var logger = (_configuration.CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
+            if (logger.IsEnabled(_configuration.FormDataLoggingLevel) && FormLoggingStrategy(application.Context))
             {
                 var form = request.Unvalidated.Form;
                 if (form.HasKeys())
@@ -79,9 +82,9 @@ namespace SerilogWeb.Classic
         /// </summary>
         /// <param name="key">Key of the pair</param>
         /// <param name="value">Value of the pair</param>
-        private static string FilterPasswords(string key, string value)
+        private string FilterPasswords(string key, string value)
         {
-            if (ApplicationLifecycleModule.FilterPasswordsInFormData && ApplicationLifecycleModule.FilteredKeywordsInFormData.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
+            if (_configuration.FilterPasswordsInFormData && _configuration.FilteredKeywordsInFormData.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
             {
                 return "********";
             }
@@ -89,11 +92,11 @@ namespace SerilogWeb.Classic
             return value;
         }
 
-        private static Func<HttpContextBase, bool> FormLoggingStrategy
+        private Func<HttpContextBase, bool> FormLoggingStrategy
         {
             get
             {
-                switch (ApplicationLifecycleModule.LogPostedFormData)
+                switch (_configuration.LogPostedFormData)
                 {
                     case LogPostedFormDataOption.Never:
                         return AlwaysFalse;
@@ -102,7 +105,7 @@ namespace SerilogWeb.Classic
                     case LogPostedFormDataOption.OnlyOnError:
                         return DefaultErrorStrategy;
                     case LogPostedFormDataOption.OnMatch:
-                        return ApplicationLifecycleModule.ShouldLogPostedFormData;
+                        return _configuration.ShouldLogPostedFormData;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }

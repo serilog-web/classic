@@ -13,7 +13,7 @@ namespace SerilogWeb.Classic.Tests.Support
             Func<HttpResponseBase> createResponse = responseFactory ?? (() => new FakeHttpResponse());
             self.Reset();
             customizeRequest(self.Request);
-            var eventHandler = new ClassicRequestEventHandler(self);
+            var eventHandler = new ClassicRequestEventHandler(self, SerilogWebModule.Configuration);
             eventHandler.OnBeginRequest();
             self.Response = createResponse();
             eventHandler.OnLogRequest();

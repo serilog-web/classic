@@ -7,6 +7,8 @@ using Serilog.Core;
 using Serilog.Events;
 using SerilogWeb.Classic.Tests.Support;
 using Xunit;
+// we are using Obsolete stuff on purpose here, just trying to check we don't break old APIs
+#pragma warning disable 618
 
 namespace SerilogWeb.Classic.Tests
 {

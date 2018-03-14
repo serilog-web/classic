@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Web;
 using Serilog;
@@ -112,7 +113,7 @@ namespace SerilogWeb.Classic
         /// <returns>A configuration object to allow chaining</returns>
         public SerilogWebModuleConfiguration IgnoreRequestsMatching(Func<HttpContextBase, bool> filter)
         {
-            RequestFilter = filter;
+            RequestFilter = filter ?? throw new ArgumentNullException(nameof(filter));
             return this;
         }
 
@@ -152,18 +153,32 @@ namespace SerilogWeb.Classic
             return this;
         }
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal bool IsEnabled { get; set; } = true;
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal LogEventLevel RequestLoggingLevel { get; set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal ILogger CustomLogger { get; set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal Func<HttpContextBase, bool> RequestFilter { get; set; }
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal LogEventLevel FormDataLoggingLevel { get; set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal LogPostedFormDataOption LogPostedFormData { get; set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal Func<HttpContextBase, bool> ShouldLogPostedFormData { get; set; }
 
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal bool FilterPasswordsInFormData { get; set; }
+        [EditorBrowsable(EditorBrowsableState.Never)]
         internal IEnumerable<String> FilteredKeywordsInFormData { get; set; }
+
+        internal ILogger Logger
+        {
+            get => (CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
+        }
 
         /// <summary>
         /// Entry point for fine-grained configuration of FormData logging

@@ -32,6 +32,7 @@ namespace SerilogWeb.Classic
         /// 
         /// </summary>
         /// <exception cref="T:System.ArgumentNullException"/>
+        [Obsolete("Use SerilogWebModule.Configuration.UseLogger(ILogger customLogger)")]
         public static ILogger Logger
         {
             get => (Config.CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
@@ -51,6 +52,7 @@ namespace SerilogWeb.Classic
         /// Custom predicate to filter which requests are logged. If the value
         /// returned is true then the request will be filtered and not logged.        
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.IgnoreRequestsMatching(filter)")]
         public static Func<HttpContextBase, bool> RequestFilter
         {
             get => Config.RequestFilter;
@@ -66,6 +68,7 @@ namespace SerilogWeb.Classic
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also
         /// true (which it is, by default).
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.EnableFormDataLogging() or SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.XXX)")]
         public static LogPostedFormDataOption LogPostedFormData
         {
             get => Config.LogPostedFormData;
@@ -76,6 +79,7 @@ namespace SerilogWeb.Classic
         /// When set to true (the default), any field containing password will 
         /// not have its value logged when DebugLogPostedFormData is enabled
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.FilterKeywords() or SerilogWebModule.Configuration.DisablePasswordFiltering")]
         public static bool FilterPasswordsInFormData
         {
             get => Config.FilterPasswordsInFormData;
@@ -86,6 +90,7 @@ namespace SerilogWeb.Classic
         /// When FilterPasswordsInFormData is true, any field containing keywords in this list will 
         /// not have its value logged when DebugLogPostedFormData is enabled
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.FilterKeywords(keywords)")]
         public static IEnumerable<String> FilteredKeywordsInFormData
         {
             get => Config.FilteredKeywordsInFormData;
@@ -96,6 +101,7 @@ namespace SerilogWeb.Classic
         /// When set to true, request details and errors will be logged. The default
         /// is true.
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.Enable() and Use SerilogWebModule.Configuration.Disable()")]
         public static bool IsEnabled
         {
             get => Config.IsEnabled;
@@ -105,6 +111,7 @@ namespace SerilogWeb.Classic
         /// <summary>
         /// The level at which to log HTTP requests. The default is Information.
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.LogAtLevel(level)")]
         public static LogEventLevel RequestLoggingLevel
         {
             get => Config.RequestLoggingLevel;
@@ -115,6 +122,7 @@ namespace SerilogWeb.Classic
         /// <summary>
         /// The level at which to log form values
         /// </summary>
+        [Obsolete("Use SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.AtLevel(level))")]
         public static LogEventLevel FormDataLoggingLevel
         {
             get => Config.FormDataLoggingLevel;
@@ -126,6 +134,7 @@ namespace SerilogWeb.Classic
         /// <see cref="LogPostedFormData"/> must be set to OnMatch for this to execute.
         /// </summary>
         /// <exception cref="System.ArgumentNullException"></exception>
+        [Obsolete("Use SerilogWebModule.Configuration.EnableFormDataLogging(cfg => cfg.OnMatch(matchingFunction))")]
         public static Func<HttpContextBase, bool> ShouldLogPostedFormData
         {
             get => Config.ShouldLogPostedFormData;
@@ -139,7 +148,7 @@ namespace SerilogWeb.Classic
         public void Init(HttpApplication application)
         {
             var appWrapper = new HttpApplicationWrapper(application);
-            var eventHandler = new ClassicRequestEventHandler(appWrapper);
+            var eventHandler = new ClassicRequestEventHandler(appWrapper, Config);
 
             application.BeginRequest += (sender, args) =>
             {
