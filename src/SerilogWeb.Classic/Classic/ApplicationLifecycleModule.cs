@@ -165,6 +165,7 @@ namespace SerilogWeb.Classic
         /// Allows to reset the module to its default configuration.
         /// Useful when testing !
         /// </summary>
+        [Obsolete("Use SerilogWebClassic.Configuration.Reset()")]
         internal static void ResetConfiguration()
         {
             Config.Reset();
