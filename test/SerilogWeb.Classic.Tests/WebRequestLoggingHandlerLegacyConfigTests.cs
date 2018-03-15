@@ -12,6 +12,9 @@ using Xunit;
 
 namespace SerilogWeb.Classic.Tests
 {
+    /// <summary>
+    /// Tests that cover the "old" static ApplicationLifecycleModule config API
+    /// </summary>
     public class WebRequestLoggingHandlerLegacyConfigTests : IDisposable
     {
         private LoggingLevelSwitch LevelSwitch { get; }

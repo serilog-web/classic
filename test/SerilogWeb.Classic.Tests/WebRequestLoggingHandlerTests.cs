@@ -10,6 +10,9 @@ using Xunit;
 
 namespace SerilogWeb.Classic.Tests
 {
+    /// <summary>
+    /// Tests that cover the WebRequestLoggingHandler without any static awkward state
+    /// </summary>
     public class WebRequestLoggingHandlerTests : IDisposable
     {
         private LoggingLevelSwitch LevelSwitch { get; }
