@@ -23,7 +23,7 @@ namespace SerilogWeb.Classic.Tests
         public WebRequestLoggingHandlerLegacyConfigTests()
         {
             ApplicationLifecycleModule.ResetConfiguration();
-            TestContext = new TestContext(new FakeHttpApplication(), ApplicationLifecycleModule.Config);
+            TestContext = new TestContext(new FakeHttpApplication(), SerilogWebClassic.Configuration);
             Events = new List<LogEvent>();
             LevelSwitch = new LoggingLevelSwitch(LogEventLevel.Verbose);
             Log.Logger = new LoggerConfiguration()

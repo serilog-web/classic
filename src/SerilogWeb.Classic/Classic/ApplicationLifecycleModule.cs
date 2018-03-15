@@ -25,7 +25,7 @@ namespace SerilogWeb.Classic
     /// </summary>
     public class ApplicationLifecycleModule : IHttpModule
     {
-        internal static SerilogWebClassicConfiguration Config => SerilogWebClassic.Configuration;
+        private static SerilogWebClassicConfiguration Config => SerilogWebClassic.Configuration;
 
         /// <summary>
         /// The globally-shared logger.
@@ -101,7 +101,7 @@ namespace SerilogWeb.Classic
         /// When set to true, request details and errors will be logged. The default
         /// is true.
         /// </summary>
-        [Obsolete("Use SerilogWebClassic.Configuration.Enable() and Use SerilogWebClassic.Configuration.Disable()")]
+        [Obsolete("Use SerilogWebClassic.Configuration.Enable() or SerilogWebClassic.Configuration.Disable()")]
         public static bool IsEnabled
         {
             get => Config.IsEnabled;
