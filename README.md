@@ -51,11 +51,71 @@ var log = new LoggerConfiguration()
 ```
 
 ## HttpModule
-The **ApplicationLifecycleModule** will automatically be enabled and will write information events about the current method and url that is being accessed. Optionally you also store any form data that is posted to the server. When an unhandled exception occurs, the module will capture it and log it as an error event.
+The **ApplicationLifecycleModule** *Http module* is automatically hooked up into your ASP.NET application as soon as you install the *SerilogWeb.Classic* package.
 
-### Configuration
+For each HTTP request that hits your application, this module will write log events containing information such as : 
+- Url
+- Http Method
+- Response status code
+- Processing time
 
-No configuration is necessary, but most of the built-in behavior can be changed using properties on the `ApplicationLifecycleModule` class.
+Regular events are written at *Information* level, and unhandled exceptions are captured and written at the *Error* level.
+
+Optionally, form data that is posted to the server can also be captured.
+
+The behavior of the Http module should fit most needs by default, but can be customized for finer control.
+
+### Fluent Configuration API
+*SerilogWeb.Classic* v4.1 introduced a new fluent configuration API that is more discoverable and easier to test. The previous configuration mechanisms are still supported, but are considered obsolete and will be removed in a future major version.
+
+All the configuration is done through method calls on `SerilogWebClassic.Configuration`.
+
+By default, all requests will be logged at the _Information_ level. To change this (i.e. to generate less events under normal conditions) use the `LogAtLevel()` method:
+
+```csharp
+SerilogWebClassic.Configuration.LogAtLevel(LogEventLevel.Debug);
+```
+
+To enable the capture of posted form data:
+
+```csharp
+SerilogWebClassic.Configuration.EnableFormDataLogging();
+// or
+SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData
+	.OnlyOnError());
+// or
+SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData
+	.OnMatch(ctx => !ctx.Request.Url.PathAndQuery.StartsWith("/__browserLink")));
+```
+
+Any fields containing the phrase 'password' will be filtered from the logged form data.  This can be disabled with:
+
+```csharp
+ApplicationLifecycleModule.FilterPasswordsInFormData = false;
+```
+
+If you want to disable the logging completely, use the following statement:
+
+```csharp
+ApplicationLifecycleModule.IsEnabled = false;
+```
+
+The configuration method calls are chainable, so a full configuration may look like : 
+```csharp
+SerilogWebClassic.Configuration
+	.UseLogger(myCustomLogger)
+	.LogAtLevel(LogEventLevel.Debug)
+	.IgnoreRequestsMatching(ctx => !ctx.Request.IsAuthenticated)
+	.EnableFormDataLogging(formData => formData
+			.AtLevel(LogEventLevel.Debug)
+			.OnlyOnError()
+			.FilterKeywords(new[] {"password", "authToken"} )
+	);
+```
+
+### *Legacy* configuration
+Before *SerilogWeb.Classic* v4.1, the configuration was done through static properties on `ApplicationLifecycleModule` class, as documented below. 
+This API is considered obsolete and may be removed in a future major version. Users should migrate to the newer fluent API documented above.
 
 By default, all requests will be logged at the _Information_ level. To change this (i.e. to generate less events under normal conditions) use the `RequestLoggingLevel` property:
 
