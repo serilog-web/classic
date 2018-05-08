@@ -91,13 +91,13 @@ SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData
 Any fields containing the phrase 'password' will be filtered from the logged form data.  This can be disabled with:
 
 ```csharp
-ApplicationLifecycleModule.FilterPasswordsInFormData = false;
+SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData.DisablePasswordFiltering());
 ```
 
 If you want to disable the logging completely, use the following statement:
 
 ```csharp
-ApplicationLifecycleModule.IsEnabled = false;
+SerilogWebClassic.Configuration.Disable();
 ```
 
 The configuration method calls are chainable, so a full configuration may look like : 
