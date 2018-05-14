@@ -12,91 +12,90 @@ namespace SerilogWeb.Classic.Tests
     /// </summary>
     public class SerilogWebClassicConfigConformanceTests : ModuleConfigurationContractTests
     {
-        protected override SerilogWebClassicConfiguration ResetConfiguration()
+        protected override void ResetConfiguration()
         {
-            SerilogWebClassic.Configuration.Reset();
-            return SerilogWebClassic.Configuration;
+            SerilogWebClassic.ResetConfiguration();
         }
 
         protected override void SetRequestLoggingLevel(LogEventLevel level)
         {
-            SerilogWebClassic.Configuration.LogAtLevel(level);
+            SerilogWebClassic.Configure(cfg => cfg.LogAtLevel(level));
         }
 
         protected override void SetRequestLoggingFilter(Func<HttpContextBase, bool> exclude)
         {
-            SerilogWebClassic.Configuration.IgnoreRequestsMatching(exclude);
+            SerilogWebClassic.Configure(cfg => cfg.IgnoreRequestsMatching(exclude));
         }
 
         protected override void EnableLogging()
         {
-            SerilogWebClassic.Configuration.Enable();
+            SerilogWebClassic.Configure(cfg => cfg.Enable());
         }
 
         protected override void DisableLogging()
         {
-            SerilogWebClassic.Configuration.Disable();
+            SerilogWebClassic.Configure(cfg => cfg.Disable());
         }
 
         protected override void EnableFormDataLoggingAlways()
         {
-            SerilogWebClassic.Configuration.EnableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging());
         }
 
         protected override void EnableFormDataLoggingAlways(LogEventLevel level)
         {
-            SerilogWebClassic.Configuration.EnableFormDataLogging(cfg => cfg.AtLevel(level));
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.AtLevel(level)));
         }
 
         protected override void EnableFormDataLoggingAlways(LogEventLevel level, bool filterPasswords)
         {
             if (filterPasswords)
             {
-                SerilogWebClassic.Configuration.EnableFormDataLogging(cfg => cfg
+                SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms
                     .AtLevel(level)
                     .FilterKeywords()
-                );
+                ));
             }
             else
             {
-                SerilogWebClassic.Configuration.EnableFormDataLogging(cfg => cfg
+                SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms
                     .AtLevel(level)
                     .DisablePasswordFiltering()
-                );
+                ));
             }
         }
 
         protected override void EnableFormDataLoggingAlways(LogEventLevel level, IEnumerable<string> customBlackList)
         {
-            SerilogWebClassic.Configuration.EnableFormDataLogging(cfg => cfg
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms
                 .AtLevel(level)
                 .FilterKeywords(customBlackList)
-            );
+            ));
         }
 
         protected override void DisableFormDataLogging()
         {
-            SerilogWebClassic.Configuration.DisableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.DisableFormDataLogging());
         }
 
         protected override void EnableFormDataLoggingOnlyOnError()
         {
-            SerilogWebClassic.Configuration.EnableFormDataLogging(cfg => cfg.OnlyOnError());
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.OnlyOnError()));
         }
 
         protected override void EnableFormDataLoggingOnMatch(Func<HttpContextBase, bool> matchFunction)
         {
-            SerilogWebClassic.Configuration.EnableFormDataLogging(cfg => cfg.OnMatch(matchFunction));
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.OnMatch(matchFunction)));
         }
 
         protected override void SetCustomLogger(ILogger logger)
         {
-            SerilogWebClassic.Configuration.UseLogger(logger);
+            SerilogWebClassic.Configure(cfg => cfg.UseLogger(logger));
         }
 
         protected override void ResetLogger()
         {
-            SerilogWebClassic.Configuration.UseDefaultLogger();
+            SerilogWebClassic.Configure(cfg => cfg.UseDefaultLogger());
         }
     }
 }

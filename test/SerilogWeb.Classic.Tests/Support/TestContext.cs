@@ -7,14 +7,14 @@ namespace SerilogWeb.Classic.Tests.Support
 {
     public class TestContext
     {
-        public TestContext(FakeHttpApplication fakeHttpApplication, SerilogWebClassicConfiguration configuration)
+
+        public TestContext(FakeHttpApplication fakeHttpApplication)
         {
             App = fakeHttpApplication;
-            Config = configuration;
         }
 
         public FakeHttpApplication App { get; }
-        public SerilogWebClassicConfiguration Config { get; }
+        private SerilogWebClassicConfiguration Config => SerilogWebClassic.Configuration;
 
         internal void SimulateRequest(Action<FakeHttpRequest> customizeRequest,
             Func<HttpResponseBase> responseFactory = null)
@@ -22,10 +22,10 @@ namespace SerilogWeb.Classic.Tests.Support
             Func<HttpResponseBase> createResponse = responseFactory ?? (() => new FakeHttpResponse());
             App.Reset();
             customizeRequest(App.Request);
-            var eventHandler = new WebRequestLoggingHandler(App, Config);
-            eventHandler.OnBeginRequest();
+            var eventHandler = new WebRequestLoggingHandler(App);
+            eventHandler.OnBeginRequest(Config);
             App.Response = createResponse();
-            eventHandler.OnLogRequest();
+            eventHandler.OnLogRequest(Config);
         }
 
 

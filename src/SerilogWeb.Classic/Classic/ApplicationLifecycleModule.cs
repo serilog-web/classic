@@ -36,7 +36,17 @@ namespace SerilogWeb.Classic
         public static ILogger Logger
         {
             get => Config.Logger;
-            set => Config.Logger = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: Config.IsEnabled,
+                requestLoggingLevel: Config.RequestLoggingLevel,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: Config.FormDataLoggingLevel,
+                customLogger: value,
+                logPostedFormData: Config.LogPostedFormData,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+            );
         }
 
         /// <summary>
@@ -56,7 +66,21 @@ namespace SerilogWeb.Classic
         public static Func<HttpContextBase, bool> RequestFilter
         {
             get => Config.RequestFilter;
-            set => Config.RequestFilter = value ?? throw new ArgumentNullException(nameof(value));
+            set
+            {
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                    isEnabled: Config.IsEnabled,
+                    requestLoggingLevel: Config.RequestLoggingLevel,
+                    requestFilter: value,
+                    formDataLoggingLevel: Config.FormDataLoggingLevel,
+                    customLogger: Config.CustomLogger,
+                    logPostedFormData: Config.LogPostedFormData,
+                    shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                    filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                    filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+                    );
+            }
         }
 
         /// <summary>
@@ -72,7 +96,17 @@ namespace SerilogWeb.Classic
         public static LogPostedFormDataOption LogPostedFormData
         {
             get => Config.LogPostedFormData;
-            set => Config.LogPostedFormData = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: Config.IsEnabled,
+                requestLoggingLevel: Config.RequestLoggingLevel,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: Config.FormDataLoggingLevel,
+                customLogger: Config.CustomLogger,
+                logPostedFormData: value,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+            );
         }
 
         /// <summary>
@@ -83,7 +117,17 @@ namespace SerilogWeb.Classic
         public static bool FilterPasswordsInFormData
         {
             get => Config.FilterPasswordsInFormData;
-            set => Config.FilterPasswordsInFormData = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: Config.IsEnabled,
+                requestLoggingLevel: Config.RequestLoggingLevel,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: Config.FormDataLoggingLevel,
+                customLogger: Config.CustomLogger,
+                logPostedFormData: Config.LogPostedFormData,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: value,
+                filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+            );
         }
 
         /// <summary>
@@ -94,7 +138,17 @@ namespace SerilogWeb.Classic
         public static IEnumerable<String> FilteredKeywordsInFormData
         {
             get => Config.FilteredKeywordsInFormData;
-            set => Config.FilteredKeywordsInFormData = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: Config.IsEnabled,
+                requestLoggingLevel: Config.RequestLoggingLevel,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: Config.FormDataLoggingLevel,
+                customLogger: Config.CustomLogger,
+                logPostedFormData: Config.LogPostedFormData,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                filteredKeywordsInFormData: value
+            );
         }
 
         /// <summary>
@@ -105,7 +159,17 @@ namespace SerilogWeb.Classic
         public static bool IsEnabled
         {
             get => Config.IsEnabled;
-            set => Config.IsEnabled = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: value,
+                requestLoggingLevel: Config.RequestLoggingLevel,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: Config.FormDataLoggingLevel,
+                customLogger: Config.CustomLogger,
+                logPostedFormData: Config.LogPostedFormData,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+            );
         }
 
         /// <summary>
@@ -115,7 +179,17 @@ namespace SerilogWeb.Classic
         public static LogEventLevel RequestLoggingLevel
         {
             get => Config.RequestLoggingLevel;
-            set => Config.RequestLoggingLevel = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: Config.IsEnabled,
+                requestLoggingLevel: value,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: Config.FormDataLoggingLevel,
+                customLogger: Config.CustomLogger,
+                logPostedFormData: Config.LogPostedFormData,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+            );
         }
 
 
@@ -126,7 +200,17 @@ namespace SerilogWeb.Classic
         public static LogEventLevel FormDataLoggingLevel
         {
             get => Config.FormDataLoggingLevel;
-            set => Config.FormDataLoggingLevel = value;
+            set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                isEnabled: Config.IsEnabled,
+                requestLoggingLevel: Config.RequestLoggingLevel,
+                requestFilter: Config.RequestFilter,
+                formDataLoggingLevel: value,
+                customLogger: Config.CustomLogger,
+                logPostedFormData: Config.LogPostedFormData,
+                shouldLogPostedFormData: Config.ShouldLogPostedFormData,
+                filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+            );
         }
 
         /// <summary>
@@ -138,7 +222,21 @@ namespace SerilogWeb.Classic
         public static Func<HttpContextBase, bool> ShouldLogPostedFormData
         {
             get => Config.ShouldLogPostedFormData;
-            set => Config.ShouldLogPostedFormData = value ?? throw new ArgumentNullException(nameof(value));
+            set
+            {
+                if (value == null) throw new ArgumentNullException(nameof(value));
+                SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
+                    isEnabled: Config.IsEnabled,
+                    requestLoggingLevel: Config.RequestLoggingLevel,
+                    requestFilter: Config.RequestFilter,
+                    formDataLoggingLevel: Config.FormDataLoggingLevel,
+                    customLogger: Config.CustomLogger,
+                    logPostedFormData: Config.LogPostedFormData,
+                    shouldLogPostedFormData: value,
+                    filterPasswordsInFormData: Config.FilterPasswordsInFormData,
+                    filteredKeywordsInFormData: Config.FilteredKeywordsInFormData
+                );
+            }
         }
 
         /// <summary>
@@ -148,16 +246,16 @@ namespace SerilogWeb.Classic
         public void Init(HttpApplication application)
         {
             var appWrapper = new HttpApplicationWrapper(application);
-            var eventHandler = new WebRequestLoggingHandler(appWrapper, Config);
+            var eventHandler = new WebRequestLoggingHandler(appWrapper);
 
             application.BeginRequest += (sender, args) =>
             {
-                eventHandler.OnBeginRequest();
+                eventHandler.OnBeginRequest(Config);
             };
 
             application.LogRequest += (sender, args) =>
             {
-                eventHandler.OnLogRequest();
+                eventHandler.OnLogRequest(Config);
             };
         }
 
@@ -165,10 +263,10 @@ namespace SerilogWeb.Classic
         /// Allows to reset the module to its default configuration.
         /// Useful when testing !
         /// </summary>
-        [Obsolete("Use SerilogWebClassic.Configuration.Reset()")]
+        [Obsolete("Use SerilogWebClassic.ResetConfiguration()")]
         internal static void ResetConfiguration()
         {
-            Config.Reset();
+            SerilogWebClassic.ResetConfiguration();
         }
 
         /// <summary>

@@ -24,8 +24,8 @@ namespace SerilogWeb.Classic.Tests
 
         protected ModuleConfigurationContractTests()
         {
-            var config = ResetConfiguration();
-            TestContext = new TestContext(new FakeHttpApplication(), config);
+            ResetConfiguration();
+            TestContext = new TestContext(new FakeHttpApplication());
             Events = new List<LogEvent>();
             LevelSwitch = new LoggingLevelSwitch(LogEventLevel.Verbose);
             Log.Logger = new LoggerConfiguration()
@@ -40,7 +40,7 @@ namespace SerilogWeb.Classic.Tests
             ResetConfiguration();
         }
 
-        protected abstract SerilogWebClassicConfiguration ResetConfiguration();
+        protected abstract void ResetConfiguration();
         protected abstract void SetRequestLoggingLevel(LogEventLevel level);
         protected abstract void SetRequestLoggingFilter(Func<HttpContextBase, bool> exclude);
         protected abstract void EnableLogging();

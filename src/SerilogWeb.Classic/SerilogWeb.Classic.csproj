@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Classic\ApplicationLifecycleModule.cs" />
+    <Compile Include="Classic\SerilogWebClassicConfigurationBuilder.cs" />
     <Compile Include="Classic\WebRequestLoggingHandler.cs" />
     <Compile Include="Classic\Enrichers\ClaimValueEnricher.cs" />
     <Compile Include="Classic\Enrichers\HttpContextCurrent.cs" />
@@ -74,7 +75,6 @@
     <Compile Include="Classic\LogPostedFormDataOption.cs" />
     <Compile Include="Classic\SerilogWebClassic.cs" />
     <Compile Include="Classic\SerilogWebClassicConfiguration.cs" />
-    <Compile Include="Classic\SerilogWebClassicFormDataLoggingConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="..\..\assets\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>

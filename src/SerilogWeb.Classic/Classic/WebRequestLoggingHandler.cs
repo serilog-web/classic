@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Web;
 using Serilog;
 using Serilog.Events;
 
@@ -9,60 +8,54 @@ namespace SerilogWeb.Classic
 {
     internal class WebRequestLoggingHandler
     {
-        const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
+        private const string StopWatchKey = "SerilogWeb.Classic.ApplicationLifecycleModule.StopWatch";
+        private const string HttpRequestEventMessageTemplate = "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms";
 
-        private static readonly Func<HttpContextBase, bool> AlwaysTrue = context => true;
-        private static readonly Func<HttpContextBase, bool> AlwaysFalse = context => false;
-        private static readonly Func<HttpContextBase, bool> DefaultErrorStrategy = context => context.Response.StatusCode >= 500;
+        private readonly IHttpApplication _application;
 
-        // ReSharper disable once InconsistentNaming
-        private readonly IHttpApplication application;
-        private readonly SerilogWebClassicConfiguration _configuration;
-
-        public WebRequestLoggingHandler(IHttpApplication application, SerilogWebClassicConfiguration configuration)
+        public WebRequestLoggingHandler(IHttpApplication application)
         {
-            this.application = application ?? throw new ArgumentNullException(nameof(application));
-            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _application = application ?? throw new ArgumentNullException(nameof(application));
         }
 
-        internal void OnBeginRequest()
+        internal void OnBeginRequest(SerilogWebClassicConfiguration configuration)
         {
-            if (_configuration.IsEnabled && application.Context != null)
+            if (configuration.IsEnabled && _application.Context != null)
             {
-                application.Context.Items[StopWatchKey] = Stopwatch.StartNew();
+                _application.Context.Items[StopWatchKey] = Stopwatch.StartNew();
             }
         }
 
-        internal void OnLogRequest()
+        internal void OnLogRequest(SerilogWebClassicConfiguration configuration)
         {
-            if (!_configuration.IsEnabled || application.Context == null)
+            if (!configuration.IsEnabled || _application.Context == null)
                 return;
 
-            var stopwatch = application.Context.Items[StopWatchKey] as Stopwatch;
+            var stopwatch = _application.Context.Items[StopWatchKey] as Stopwatch;
             if (stopwatch == null)
                 return;
 
             stopwatch.Stop();
 
-            var request = application.Request;
-            if (request == null || _configuration.RequestFilter(application.Context))
+            var request = _application.Request;
+            if (request == null || configuration.RequestFilter(_application.Context))
                 return;
 
-            var error = application.Server.GetLastError();
-            var level = error != null || application.Response.StatusCode >= 500 ? LogEventLevel.Error : _configuration.RequestLoggingLevel;
+            var error = _application.Server.GetLastError();
+            var level = error != null || _application.Response.StatusCode >= 500 ? LogEventLevel.Error : configuration.RequestLoggingLevel;
 
-            if (level == LogEventLevel.Error && error == null && application.Context.AllErrors != null)
+            if (level == LogEventLevel.Error && error == null && _application.Context.AllErrors != null)
             {
-                error = application.Context.AllErrors.LastOrDefault();
+                error = _application.Context.AllErrors.LastOrDefault();
             }
 
-            var logger = (_configuration.CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
-            if (logger.IsEnabled(_configuration.FormDataLoggingLevel) && FormLoggingStrategy(application.Context))
+            var logger = (configuration.CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
+            if (logger.IsEnabled(configuration.FormDataLoggingLevel) && configuration.FormLoggingStrategy(_application.Context))
             {
                 var form = request.Unvalidated.Form;
                 if (form.HasKeys())
                 {
-                    var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = FilterPasswords(k, v) }));
+                    var formData = form.AllKeys.SelectMany(k => (form.GetValues(k) ?? new string[0]).Select(v => new { Name = k, Value = configuration.FilterPasswords(k, v) }));
                     logger = logger.ForContext("FormData", formData, true);
                 }
             }
@@ -70,46 +63,11 @@ namespace SerilogWeb.Classic
             logger.Write(
                 level,
                 error,
-                "HTTP {Method} {RawUrl} responded {StatusCode} in {ElapsedMilliseconds}ms",
+                HttpRequestEventMessageTemplate,
                 request.HttpMethod,
                 request.RawUrl,
-                application.Response.StatusCode,
+                _application.Response.StatusCode,
                 stopwatch.ElapsedMilliseconds);
-        }
-
-        /// <summary>
-        /// Filters configured keywords from being logged
-        /// </summary>
-        /// <param name="key">Key of the pair</param>
-        /// <param name="value">Value of the pair</param>
-        private string FilterPasswords(string key, string value)
-        {
-            if (_configuration.FilterPasswordsInFormData && _configuration.FilteredKeywordsInFormData.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
-            {
-                return "********";
-            }
-
-            return value;
-        }
-
-        private Func<HttpContextBase, bool> FormLoggingStrategy
-        {
-            get
-            {
-                switch (_configuration.LogPostedFormData)
-                {
-                    case LogPostedFormDataOption.Never:
-                        return AlwaysFalse;
-                    case LogPostedFormDataOption.Always:
-                        return AlwaysTrue;
-                    case LogPostedFormDataOption.OnlyOnError:
-                        return DefaultErrorStrategy;
-                    case LogPostedFormDataOption.OnMatch:
-                        return _configuration.ShouldLogPostedFormData;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
         }
     }
 }

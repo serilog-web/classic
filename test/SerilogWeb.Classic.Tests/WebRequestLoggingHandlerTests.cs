@@ -19,12 +19,12 @@ namespace SerilogWeb.Classic.Tests
         private List<LogEvent> Events { get; }
         private LogEvent LastEvent => Events.LastOrDefault();
         private FakeHttpApplication App => TestContext.App;
-        private SerilogWebClassicConfiguration Config => TestContext.Config;
         private TestContext TestContext { get; }
 
         public WebRequestLoggingHandlerTests()
         {
-            TestContext = new TestContext(new FakeHttpApplication(), new SerilogWebClassicConfiguration());
+            SerilogWebClassic.ResetConfiguration();
+            TestContext = new TestContext(new FakeHttpApplication());
             Events = new List<LogEvent>();
             LevelSwitch = new LoggingLevelSwitch(LogEventLevel.Verbose);
             Log.Logger = new LoggerConfiguration()
@@ -74,7 +74,7 @@ namespace SerilogWeb.Classic.Tests
         [InlineData(LogEventLevel.Fatal)]
         public void RequestLoggingLevel(LogEventLevel requestLoggingLevel)
         {
-            Config.LogAtLevel(requestLoggingLevel);
+            SerilogWebClassic.Configure(cfg => cfg.LogAtLevel(requestLoggingLevel));
 
             TestContext.SimulateRequest();
 
@@ -92,7 +92,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            Config.EnableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging());
 
             TestContext.SimulateForm(formData);
 
@@ -111,7 +111,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo", "Qux" }
             };
 
-            Config.EnableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging());
 
             TestContext.SimulateForm(formData);
 
@@ -131,7 +131,7 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void LogPostedFormDataAddsNoPropertyWhenThereIsNoFormData()
         {
-            Config.EnableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging());
 
             TestContext.SimulateForm(new NameValueCollection());
 
@@ -148,7 +148,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Foo","Bar" },
                 {"Qux", "Baz" }
             };
-            Config.EnableFormDataLogging(cfg => cfg.AtLevel(LogEventLevel.Verbose));
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.AtLevel(LogEventLevel.Verbose)));
 
             LevelSwitch.MinimumLevel = LogEventLevel.Information;
             TestContext.SimulateForm(formData);
@@ -182,7 +182,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            Config.EnableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging());
 
             TestContext.SimulateForm(formData);
 
@@ -198,7 +198,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            Config.DisableFormDataLogging();
+            SerilogWebClassic.Configure(cfg => cfg.DisableFormDataLogging());
 
             TestContext.SimulateForm(formData);
 
@@ -222,7 +222,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            Config.EnableFormDataLogging(cfg => cfg.OnlyOnError());
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.OnlyOnError()));
 
             TestContext.SimulateForm(formData, statusCode);
 
@@ -240,7 +240,7 @@ namespace SerilogWeb.Classic.Tests
                 {"Qux", "Baz" }
             };
 
-            Config.EnableFormDataLogging(cfg => cfg.OnMatch(ctx => shouldLogFormData));
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.OnMatch(ctx => shouldLogFormData)));
 
             TestContext.SimulateForm(formData);
 
@@ -250,7 +250,7 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void FormDataExcludesPasswordKeysByDefault()
         {
-            Config.EnableFormDataLogging(cfg => cfg.AtLevel(LogEventLevel.Information));
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms.AtLevel(LogEventLevel.Information)));
 
             var formData = new NameValueCollection
             {
@@ -280,10 +280,10 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void PasswordFilteringCanBeDisabled()
         {
-            Config.EnableFormDataLogging(cfg => cfg
-                .AtLevel(LogEventLevel.Information)
-                .DisablePasswordFiltering()
-            );
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms
+                 .AtLevel(LogEventLevel.Information)
+                 .DisablePasswordFiltering()
+            ));
 
             var formData = new NameValueCollection
             {
@@ -304,13 +304,13 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void PasswordBlackListCanBeCustomized()
         {
-            Config.EnableFormDataLogging(cfg => cfg
-                .AtLevel(LogEventLevel.Information)
-                .FilterKeywords(new List<string>
-                    {
+            SerilogWebClassic.Configure(cfg => cfg.EnableFormDataLogging(forms => forms
+                 .AtLevel(LogEventLevel.Information)
+                 .FilterKeywords(new List<string>
+                     {
                         "badword", "forbidden", "restricted"
-                    }
-            ));
+                     }
+             )));
 
             var formData = new NameValueCollection
             {
@@ -339,11 +339,11 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void EnableDisable()
         {
-            Config.Disable();
+            SerilogWebClassic.Configure(cfg => cfg.Disable());
             TestContext.SimulateRequest();
             Assert.Null(LastEvent);
 
-            Config.Enable();
+            SerilogWebClassic.Configure(cfg => cfg.Enable());
             TestContext.SimulateRequest();
             Assert.NotNull(LastEvent);
         }
@@ -356,7 +356,7 @@ namespace SerilogWeb.Classic.Tests
                 .WriteTo.Sink(new DelegatingSink(ev => myLogEvents.Add(ev)))
                 .CreateLogger())
             {
-                Config.UseLogger(myLogger);
+                SerilogWebClassic.Configure(cfg => cfg.UseLogger(myLogger));
 
                 TestContext.SimulateRequest();
 
@@ -374,9 +374,9 @@ namespace SerilogWeb.Classic.Tests
         {
             var ignoredPath = "/ignoreme/";
             var ignoredMethod = "HEAD";
-            Config.IgnoreRequestsMatching(ctx =>
-                ctx.Request.RawUrl.ToLowerInvariant().Contains(ignoredPath.ToLowerInvariant())
-                || ctx.Request.HttpMethod == ignoredMethod);
+            SerilogWebClassic.Configure(cfg => cfg.IgnoreRequestsMatching(ctx =>
+                 ctx.Request.RawUrl.ToLowerInvariant().Contains(ignoredPath.ToLowerInvariant())
+                 || ctx.Request.HttpMethod == ignoredMethod));
 
             TestContext.SimulateRequest("GET", $"{ignoredPath}widgets");
             Assert.Null(LastEvent); // should be filtered out

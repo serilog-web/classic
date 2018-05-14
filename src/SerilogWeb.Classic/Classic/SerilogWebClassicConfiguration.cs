@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
+using System.Linq;
 using System.Web;
 using Serilog;
 using Serilog.Events;
@@ -10,163 +10,91 @@ namespace SerilogWeb.Classic
     /// <summary>
     /// The configuration entry point for SerilogWeb.Classic's logging module 
     /// </summary>
-    public sealed class SerilogWebClassicConfiguration
+    internal sealed class SerilogWebClassicConfiguration
     {
-        internal static readonly Func<HttpContextBase, bool> AlwaysFalse = context => false;
-        internal static readonly string[] DefaultFilteredOutFormDataKeywords = { "password" };
+        private static readonly Func<HttpContextBase, bool> AlwaysTrue = context => true;
+        private static readonly Func<HttpContextBase, bool> AlwaysFalse = context => false;
+        private static readonly Func<HttpContextBase, bool> DefaultErrorStrategy = context => context.Response.StatusCode >= 500;
 
-        internal SerilogWebClassicConfiguration()
+        internal SerilogWebClassicConfiguration(
+            bool isEnabled,
+            LogEventLevel requestLoggingLevel,
+            Func<HttpContextBase, bool> requestFilter,
+            LogEventLevel formDataLoggingLevel,
+            ILogger customLogger,
+            LogPostedFormDataOption logPostedFormData,
+            Func<HttpContextBase, bool> shouldLogPostedFormData,
+            bool filterPasswordsInFormData,
+            IEnumerable<string> filteredKeywordsInFormData)
         {
-            Reset();
+            IsEnabled = isEnabled;
+            RequestLoggingLevel = requestLoggingLevel;
+            RequestFilter = requestFilter;
+            FormDataLoggingLevel = formDataLoggingLevel;
+            CustomLogger = customLogger;
+            LogPostedFormData = logPostedFormData;
+            ShouldLogPostedFormData = shouldLogPostedFormData;
+            FilterPasswordsInFormData = filterPasswordsInFormData;
+            FilteredKeywordsInFormData = filteredKeywordsInFormData;
+
+            switch (logPostedFormData)
+            {
+                case LogPostedFormDataOption.Never:
+                    FormLoggingStrategy = AlwaysFalse;
+                    break;
+                case LogPostedFormDataOption.Always:
+                    FormLoggingStrategy = AlwaysTrue;
+                    break;
+                case LogPostedFormDataOption.OnlyOnError:
+                    FormLoggingStrategy = DefaultErrorStrategy;
+                    break;
+                case LogPostedFormDataOption.OnMatch:
+                    FormLoggingStrategy = shouldLogPostedFormData;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(logPostedFormData), logPostedFormData, $"Should be a valid {nameof(LogPostedFormDataOption)}");
+            }
         }
 
-        internal void Reset()
+        internal static readonly SerilogWebClassicConfiguration Default = new SerilogWebClassicConfigurationBuilder().Build();
+
+        internal SerilogWebClassicConfiguration Edit(Func<SerilogWebClassicConfigurationBuilder, SerilogWebClassicConfigurationBuilder> configure)
         {
-            CustomLogger = null;
-            IsEnabled = true;
-            RequestLoggingLevel = LogEventLevel.Information;
-            RequestFilter = AlwaysFalse;
-            ResetFormDataLogging();
+            return (configure(new SerilogWebClassicConfigurationBuilder(this))).Build();
         }
 
-        private void ResetFormDataLogging()
-        {
-            FormDataLoggingLevel = LogEventLevel.Debug;
-            LogPostedFormData = LogPostedFormDataOption.Never;
-            ShouldLogPostedFormData = AlwaysFalse;
-            FilterPasswordsInFormData = true;
-            FilteredKeywordsInFormData = DefaultFilteredOutFormDataKeywords;
-        }
+        internal bool IsEnabled { get; }
 
+        internal LogEventLevel RequestLoggingLevel { get; }
+        internal ILogger CustomLogger { get; }
+        internal Func<HttpContextBase, bool> RequestFilter { get; }
+
+        internal LogEventLevel FormDataLoggingLevel { get; }
+        internal LogPostedFormDataOption LogPostedFormData { get; }
+        internal Func<HttpContextBase, bool> ShouldLogPostedFormData { get; }
+
+        internal bool FilterPasswordsInFormData { get; }
+        internal IEnumerable<string> FilteredKeywordsInFormData { get; }
+
+        internal ILogger Logger => (CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
+
+        
+        internal Func<HttpContextBase, bool> FormLoggingStrategy { get; }
+
+        
         /// <summary>
-        /// Disable the logging module completely. Not log events will be written for incoming Http requests
+        /// Filters configured keywords from being logged
         /// </summary>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration Disable()
+        /// <param name="key">Key of the pair</param>
+        /// <param name="value">Value of the pair</param>
+        internal string FilterPasswords(string key, string value)
         {
-            IsEnabled = false;
-            return this;
-        }
+            if (FilterPasswordsInFormData && FilteredKeywordsInFormData.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
+            {
+                return "********";
+            }
 
-        /// <summary>
-        /// Enable the logging completely so that log events are written for incoming requests.
-        /// Is it enabled by default.
-        /// </summary>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration Enable()
-        {
-            IsEnabled = true;
-            return this;
-        }
-
-
-        /// <summary>
-        /// Configure at which level HTTP requests are logged.
-        /// Default is Information
-        /// </summary>
-        /// <param name="level">The level to override the default value</param>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration LogAtLevel(LogEventLevel level)
-        {
-            RequestLoggingLevel = level;
-            return this;
-        }
-
-        /// <summary>
-        /// Use a user-specified Logger to write events for HTTP requests.
-        /// </summary>
-        /// <param name="customLogger">A custom logger to which events will be written</param>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration UseLogger(ILogger customLogger)
-        {
-            CustomLogger = customLogger ?? throw new ArgumentNullException(nameof(customLogger));
-            return this;
-        }
-
-        /// <summary>
-        /// Use Log.Logger to write events for HTTP requests.
-        /// This is the default.
-        /// </summary>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration UseDefaultLogger()
-        {
-            CustomLogger = null;
-            return this;
-        }
-
-        /// <summary>
-        /// Specify criteria for HTTP requests to be excluded from logging
-        /// </summary>
-        /// <param name="filter">A predicate that specify which requests will be filtered out</param>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration IgnoreRequestsMatching(Func<HttpContextBase, bool> filter)
-        {
-            RequestFilter = filter ?? throw new ArgumentNullException(nameof(filter));
-            return this;
-        }
-
-        /// <summary>
-        /// Enable logging of the posted Form Data of the HTTP request.
-        /// When present, FormData will be attached to all logged events when the log level Debug is enabled.
-        /// </summary>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration EnableFormDataLogging()
-        {
-            return EnableFormDataLogging(cfg => { });
-        }
-
-        /// <summary>
-        /// Enables customized configuration of the Form Data logging behavior
-        /// </summary>
-        /// <param name="configure">Configuration method invocations</param>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration EnableFormDataLogging(Action<SerilogWebClassicFormDataLoggingConfiguration> configure)
-        {
-            ResetFormDataLogging();
-            LogPostedFormData = LogPostedFormDataOption.Always;
-            var formDataLogging = new SerilogWebClassicFormDataLoggingConfiguration(this);
-            configure(formDataLogging);
-            return this;
-        }
-
-        /// <summary>
-        /// Disable logging of the posted Form Data of the HTTP requests.
-        /// No FormData will be attached to logged events.
-        /// This is the default behavior.
-        /// </summary>
-        /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfiguration DisableFormDataLogging()
-        {
-            ResetFormDataLogging();
-            return this;
-        }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal bool IsEnabled { get; set; } = true;
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal LogEventLevel RequestLoggingLevel { get; set; }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal ILogger CustomLogger { get; private set; }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal Func<HttpContextBase, bool> RequestFilter { get; set; }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal LogEventLevel FormDataLoggingLevel { get; set; }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal LogPostedFormDataOption LogPostedFormData { get; set; }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal Func<HttpContextBase, bool> ShouldLogPostedFormData { get; set; }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal bool FilterPasswordsInFormData { get; set; }
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        internal IEnumerable<String> FilteredKeywordsInFormData { get; set; }
-
-        internal ILogger Logger
-        {
-            get => (CustomLogger ?? Log.Logger).ForContext<ApplicationLifecycleModule>();
-            set => CustomLogger = value ?? throw new ArgumentNullException(nameof(value));
+            return value;
         }
     }
 }

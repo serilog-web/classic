@@ -12,10 +12,9 @@ namespace SerilogWeb.Classic.Tests
     /// </summary>
     public class ApplicationLifecycleConfigConformanceTests : ModuleConfigurationContractTests
     {
-        protected override SerilogWebClassicConfiguration ResetConfiguration()
+        protected override void ResetConfiguration()
         {
             ApplicationLifecycleModule.ResetConfiguration();
-            return SerilogWebClassic.Configuration;
         }
 
         protected override void SetRequestLoggingLevel(LogEventLevel level)
