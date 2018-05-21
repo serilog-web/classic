@@ -68,54 +68,68 @@ The behavior of the Http module should fit most needs by default, but can be cus
 ### Fluent Configuration API
 *SerilogWeb.Classic* v4.1 introduced a new fluent configuration API that is more discoverable and easier to test. The previous configuration mechanisms are still supported, but are considered obsolete and will be removed in a future major version.
 
-All the configuration is done through method calls on `SerilogWebClassic.Configuration`.
+All the configuration is done through method calls on  `SerilogWebClassic.Configure(cfg => cfg.xxx())`.
 
 By default, all requests will be logged at the _Information_ level. To change this (i.e. to generate less events under normal conditions) use the `LogAtLevel()` method:
 
 ```csharp
-SerilogWebClassic.Configuration.LogAtLevel(LogEventLevel.Debug);
+SerilogWebClassic.Configure(cfg => cfg
+  .LogAtLevel(LogEventLevel.Debug)
+);
 ```
 
 To enable the capture of posted form data:
 
 ```csharp
-SerilogWebClassic.Configuration.EnableFormDataLogging();
+SerilogWebClassic.Configure(cfg => cfg
+  .EnableFormDataLogging()
+);
 // or
-SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData
-	.OnlyOnError());
+SerilogWebClassic.Configure(cfg => cfg
+  .EnableFormDataLogging(forms => forms
+    .OnlyOnError()
+));
 // or
-SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData
-	.OnMatch(ctx => !ctx.Request.Url.PathAndQuery.StartsWith("/__browserLink")));
+SerilogWebClassic.Configure(cfg => cfg.
+  .EnableFormDataLogging(forms => forms
+    .OnMatch(ctx => !ctx.Request.Url.PathAndQuery.StartsWith("/__browserLink"))
+));
 ```
 
 Any fields containing the phrase 'password' will be filtered from the logged form data.  This can be disabled with:
 
 ```csharp
-SerilogWebClassic.Configuration.EnableFormDataLogging(formData => formData.DisablePasswordFiltering());
+SerilogWebClassic.Configure(cfg => cfg
+  .EnableFormDataLogging(forms => forms
+    .DisablePasswordFiltering()
+));
 ```
 
 If you want to disable the logging completely, use the following statement:
 
 ```csharp
-SerilogWebClassic.Configuration.Disable();
+SerilogWebClassic.Configure(cfg => cfg
+  .Disable()
+);
 ```
 
 The configuration method calls are chainable, so a full configuration may look like : 
 ```csharp
-SerilogWebClassic.Configuration
-	.UseLogger(myCustomLogger)
-	.LogAtLevel(LogEventLevel.Debug)
-	.IgnoreRequestsMatching(ctx => !ctx.Request.IsAuthenticated)
-	.EnableFormDataLogging(formData => formData
-			.AtLevel(LogEventLevel.Debug)
-			.OnlyOnError()
-			.FilterKeywords(new[] {"password", "authToken"} )
-	);
+SerilogWebClassic.Configure(cfg => 
+  .UseLogger(myCustomLogger)
+  .LogAtLevel(LogEventLevel.Debug)
+  .IgnoreRequestsMatching(ctx => !ctx.Request.IsAuthenticated)
+  .EnableFormDataLogging(forms => forms
+    .AtLevel(LogEventLevel.Debug)
+    .OnlyOnError()
+    .FilterKeywords(new[] {"password", "authToken"} )
+));
 ```
 
 ### *Legacy* configuration
 Before *SerilogWeb.Classic* v4.1, the configuration was done through static properties on `ApplicationLifecycleModule` class, as documented below. 
-This API is considered obsolete and may be removed in a future major version. Users should migrate to the newer fluent API documented above.
+
+This API is **considered obsolete** and may be removed in a future major version. Users should migrate to the newer fluent API documented above.
 
 By default, all requests will be logged at the _Information_ level. To change this (i.e. to generate less events under normal conditions) use the `RequestLoggingLevel` property:
 
