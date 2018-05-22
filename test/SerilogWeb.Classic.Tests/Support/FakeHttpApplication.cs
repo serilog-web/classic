@@ -23,7 +23,7 @@ namespace SerilogWeb.Classic.Tests.Support
         public void Reset()
         {
             Context = new FakeHttpContext(this);
-            Request = new FakeHttpRequest(this);
+            Request = new FakeHttpRequest();
             Response = null;
             Server = new FakeHttpServerUtility(this);
         }
@@ -74,13 +74,6 @@ namespace SerilogWeb.Classic.Tests.Support
 
     public class FakeHttpRequest : HttpRequestBase
     {
-        private readonly FakeHttpApplication _httpApplication;
-
-        public FakeHttpRequest(FakeHttpApplication httpApplication)
-        {
-            _httpApplication = httpApplication ?? throw new ArgumentNullException(nameof(httpApplication));
-        }
-
         private string _rawUrl = "http://www.example.com";
         private string _httpMethod = "GET";
 

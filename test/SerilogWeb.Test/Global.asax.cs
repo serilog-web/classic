@@ -9,16 +9,17 @@ namespace SerilogWeb.Test
     {
         protected void Application_Start(object sender, EventArgs e)
         {
-            ApplicationLifecycleModule.FormDataLoggingLevel = LogEventLevel.Debug;
-            ApplicationLifecycleModule.LogPostedFormData = LogPostedFormDataOption.OnMatch;
-            ApplicationLifecycleModule.ShouldLogPostedFormData = context => context.Response.StatusCode >= 400;
-
             // ReSharper disable once PossibleNullReferenceException
-            ApplicationLifecycleModule.RequestFilter = context => context.Request.Url.PathAndQuery.StartsWith("/__browserLink");
+            SerilogWebClassic.Configure(cfg => cfg
+                    .IgnoreRequestsMatching(ctx => ctx.Request.Url.PathAndQuery.StartsWith("/__browserLink"))
+                    .EnableFormDataLogging(formData => formData
+                                                .AtLevel(LogEventLevel.Debug)
+                                                .OnMatch(ctx => ctx.Response.StatusCode >= 400))
+                );
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .WriteTo.Trace(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception} {Properties:j}" )
+                .WriteTo.Trace(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception} {Properties:j}")
                 .CreateLogger();
         }
     }
