@@ -16,10 +16,9 @@ namespace SerilogWeb.Test
                                                 .AtLevel(LogEventLevel.Debug)
                                                 .OnMatch(ctx => ctx.Response.StatusCode >= 400))
                 );
-
+            
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Trace(outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level}] {Message}{NewLine}{Exception} {Properties:j}")
+                .ReadFrom.AppSettings()
                 .CreateLogger();
         }
     }
