@@ -106,5 +106,19 @@ namespace Serilog
             if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
             return enrichmentConfiguration.With<HttpRequestRawUrlEnricher>();
         }
+
+        /// <summary>
+        /// Enrich log events with a HttpRequestTraceId GUID matching the
+        /// RequestTraceIdentifier assigned by IIS and used throughout
+        /// ASP.NET/ETW. IIS ETW tracing must be enabled for this to work.
+        /// </summary>
+        /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
+        /// <returns>Configuration object allowing method chaining.</returns>
+        public static LoggerConfiguration WithHttpRequestTraceId(
+            this LoggerEnrichmentConfiguration enrichmentConfiguration)
+        {
+            if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
+            return enrichmentConfiguration.With<HttpRequestTraceIdEnricher>();
+        }
     }
 }
