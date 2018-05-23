@@ -86,21 +86,24 @@ namespace Serilog
         /// Enrich log events with the Url of the Request.
         /// </summary>
         /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
-        /// <param name="useRawUrl">if set to <c>true</c> this Enricher uses the Raw Url of the Request.</param>
         /// <returns>Configuration object allowing method chaining.</returns>
         public static LoggerConfiguration WithHttpRequestUrl(
-            this LoggerEnrichmentConfiguration enrichmentConfiguration,
-            bool useRawUrl = true)
+            this LoggerEnrichmentConfiguration enrichmentConfiguration)
+        {
+            if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));       
+            return enrichmentConfiguration.With< HttpRequestUrlEnricher>();
+        }
+
+        /// <summary>
+        /// Enrich log events with the Raw Url of the Request.
+        /// </summary>
+        /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
+        /// <returns>Configuration object allowing method chaining.</returns>
+        public static LoggerConfiguration WithHttpRequestRawUrl(
+            this LoggerEnrichmentConfiguration enrichmentConfiguration)
         {
             if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
-
-            ILogEventEnricher urlEnricher;
-            if (useRawUrl)
-                urlEnricher = new HttpRequestRawUrlEnricher();
-            else
-                urlEnricher = new HttpRequestUrlEnricher();
-            
-            return enrichmentConfiguration.With(urlEnricher);
+            return enrichmentConfiguration.With<HttpRequestRawUrlEnricher>();
         }
 
         /// <summary>
