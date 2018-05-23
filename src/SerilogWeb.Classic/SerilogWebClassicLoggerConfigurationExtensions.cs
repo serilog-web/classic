@@ -69,5 +69,17 @@ namespace Serilog
             if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
             return enrichmentConfiguration.With<HttpRequestClientHostNameEnricher>();
         }
+
+        /// <summary>
+        /// Enrich log events with a HttpRequestId GUID.
+        /// </summary>
+        /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
+        /// <returns>Configuration object allowing method chaining.</returns>
+        public static LoggerConfiguration WithHttpRequestId(
+            this LoggerEnrichmentConfiguration enrichmentConfiguration)
+        {
+            if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
+            return enrichmentConfiguration.With<HttpRequestIdEnricher>();
+        }
     }
 }
