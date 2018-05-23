@@ -40,8 +40,8 @@ namespace SerilogWeb.Classic.Enrichers
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ClaimValueEnricher"/> class.
-        /// <param name="claimProperty">The claim property name searched for value to enrich log events.</param>
         /// </summary>
+        /// <param name="claimProperty">The claim property name searched for value to enrich log events.</param>
         public ClaimValueEnricher(string claimProperty) : this(claimProperty, null)
         {
             _claimProperty = claimProperty;
