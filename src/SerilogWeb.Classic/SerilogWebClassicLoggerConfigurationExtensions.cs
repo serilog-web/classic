@@ -19,26 +19,12 @@ namespace Serilog
         /// </summary>
         /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
         /// <param name="claimProperty">The claim property name searched for value to enrich log events.</param>
-        /// <returns>Configuration object allowing method chaining.</returns>
-        public static LoggerConfiguration WithClaimValue(
-            this LoggerEnrichmentConfiguration enrichmentConfiguration,
-            string claimProperty)
-        {
-            if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
-            return enrichmentConfiguration.With(new ClaimValueEnricher(claimProperty));
-        }
-
-        /// <summary>
-        /// Enrich log events with the named Claim Value.
-        /// </summary>
-        /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
-        /// <param name="claimProperty">The claim property name searched for value to enrich log events.</param>
-        /// <param name="logEventProperty">The property name added to enriched log events.</param>
+        /// <param name="logEventProperty">The property name added to enriched log events. Leave null (default) to use the claim property name.</param>
         /// <returns>Configuration object allowing method chaining.</returns>
         public static LoggerConfiguration WithClaimValue(
             this LoggerEnrichmentConfiguration enrichmentConfiguration,
             string claimProperty,
-            string logEventProperty)
+            string logEventProperty = null)
         {
             if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
             return enrichmentConfiguration.With(new ClaimValueEnricher(claimProperty, logEventProperty));
