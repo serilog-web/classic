@@ -30,7 +30,6 @@ namespace Serilog
             return enrichmentConfiguration.With(new ClaimValueEnricher(claimProperty, logEventProperty));
         }
 
-
         /// <summary>
         /// Enrich log events with the Client IP Address.
         /// </summary>
