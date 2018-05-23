@@ -42,5 +42,20 @@ namespace Serilog
             if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
             return enrichmentConfiguration.With(new ClaimValueEnricher(claimProperty, logEventProperty));
         }
+
+
+        /// <summary>
+        /// Enrich log events with the Client IP Address.
+        /// </summary>
+        /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
+        /// <param name="checkForHttpProxies">if set to <c>true</c> this Enricher also checks for HTTP proxies and their X-FORWARDED-FOR header.</param>
+        /// <returns>Configuration object allowing method chaining.</returns>
+        public static LoggerConfiguration WithHttpRequestClientHostIP(
+            this LoggerEnrichmentConfiguration enrichmentConfiguration,
+            bool checkForHttpProxies = true)
+        {
+            if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
+            return enrichmentConfiguration.With(new HttpRequestClientHostIPEnricher(checkForHttpProxies));
+        }
     }
 }
