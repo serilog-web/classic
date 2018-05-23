@@ -178,5 +178,21 @@ namespace Serilog
             if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
             return enrichmentConfiguration.With<HttpSessionIdEnricher>();
         }
+
+        /// <summary>
+        /// Enrich log events with the UserName property when available in the HttpContext.
+        /// </summary>
+        /// <param name="enrichmentConfiguration">Logger enrichment configuration.</param>
+        /// <param name="anonymousUsername">The anonymous username. Leave null if you do not want to use anonymous user names. By default it is (anonymous).</param>
+        /// <param name="noneUsername">The none username. If there is no username to be found, it will output this username. Leave null (default) to ignore non usernames.</param>
+        /// <returns>Configuration object allowing method chaining.</returns>
+        public static LoggerConfiguration WithUserName(
+            this LoggerEnrichmentConfiguration enrichmentConfiguration,
+            string anonymousUsername = "(anonymous)",
+            string noneUsername = null)
+        {
+            if (enrichmentConfiguration == null) throw new ArgumentNullException(nameof(enrichmentConfiguration));
+            return enrichmentConfiguration.With(new UserNameEnricher(anonymousUsername, noneUsername));
+        }
     }
 }
