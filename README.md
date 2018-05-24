@@ -16,28 +16,28 @@ When you work with an ASP.NET web application, this package adds
 When working with ASP.NET MVC (not Core) or ASP.NET Web API, you may also want to have a look at [SerilogWeb.Classic.Mvc](https://github.com/serilog-web/classic-mvc) and [SerilogWeb.Classic.WebAPI](https://github.com/serilog-web/classic-webapi)
 
 ## Enrichers
-The following enrichers are available in the `SerilogWeb.Classic.Enrichers` namespace:
+The following enrichers are available as extension methods from the `LoggerConfiguration.Enrich` API:
 
-*  **ClaimValueEnricher** : adds a property contaning the value of a given claim from the current `ClaimsIdentity` User
-*  **HttpRequestClientHostIPEnricher** : adds a property `HttpRequestClientHostIP` containing  `Request.UserHostAddress` (optionally checking for proxy header)
-*  **HttpRequestClientHostNameEnricher** : adds a property `HttpRequestClientHostName` containing  `Request.UserHostName`
-*  **HttpRequestIdEnricher** : adds a property `HttpRequestId` with a GUID used to identify requests.
-*  **HttpRequestNumberEnricher** : adds a property `HttpRequestNumber` with an incrementing number per request.
-*  **HttpRequestRawUrlEnricher** : adds a property `HttpRequestRawUrl` with the Raw Url of the Request.
-*  **HttpRequestTraceIdEnricher** : adds a property `HttpRequestTraceId` with a GUID matching the RequestTraceIdentifier assigned by IIS and used throughout ASP.NET/ETW. (IIS ETW tracing must be enabled for this to work)
-*  **HttpRequestTypeEnricher** : adds a property `HttpRequestType` with the Request Type (`GET` or `POST`).
-*  **HttpRequestUrlEnricher** : adds a property `HttpRequestUrl` with the Url of the Request.
-*  **HttpRequestUrlReferrerEnricher** : adds a property `HttpRequestUrlReferrer` with the UrlReferrer of the Request.
-*  **HttpRequestUserAgentEnricher** : adds a property `HttpRequestUserAgent` with the User Agent of the Request.
-*  **HttpSessionIdEnricher** : adds a property `HttpSessionId` with the current ASP.NET session id.
-*  **UserNameEnricher** : adds a property `UserName` with the current username or, when anonymous, a defined value. By default this is set to _(anonymous)_.
+*  **WithClaimValue** : adds a property contaning the value of a given claim from the current `ClaimsIdentity` User
+*  **WithHttpRequestClientHostIP** : adds a property `HttpRequestClientHostIP` containing  `Request.UserHostAddress` (optionally checking for proxy header)
+*  **WithHttpRequestClientHostName** : adds a property `HttpRequestClientHostName` containing  `Request.UserHostName`
+*  **WithHttpRequestId** : adds a property `HttpRequestId` with a GUID used to identify requests.
+*  **WithHttpRequestNumber** : adds a property `HttpRequestNumber` with an incrementing number per request.
+*  **WithHttpRequestRawUrl** : adds a property `HttpRequestRawUrl` with the Raw Url of the Request.
+*  **WithHttpRequestTraceId** : adds a property `HttpRequestTraceId` with a GUID matching the RequestTraceIdentifier assigned by IIS and used throughout ASP.NET/ETW. (IIS ETW tracing must be enabled for this to work)
+*  **WithHttpRequestType** : adds a property `HttpRequestType` with the Request Type (`GET` or `POST`).
+*  **WithHttpRequestUrl** : adds a property `HttpRequestUrl` with the Url of the Request.
+*  **WithHttpRequestUrlReferrer** : adds a property `HttpRequestUrlReferrer` with the UrlReferrer of the Request.
+*  **WithHttpRequestUserAgent** : adds a property `HttpRequestUserAgent` with the User Agent of the Request.
+*  **WithHttpSessionId** : adds a property `HttpSessionId` with the current ASP.NET session id.
+*  **WithUserName** : adds a property `UserName` with the current username or, when anonymous, a defined value. By default this is set to _(anonymous)_.
 
 
 ```csharp
 var log = new LoggerConfiguration()
     .WriteTo.Console()
-    .Enrich.With<HttpRequestIdEnricher>()
-    .Enrich.With<UserNameEnricher>()
+    .Enrich.WithHttpRequestId()
+    .Enrich.WithUserName()
     .CreateLogger();
 ```
 
@@ -46,8 +46,29 @@ To override the username enricher behaviour:
 ```csharp
 var log = new LoggerConfiguration()
     .WriteTo.ColoredConsole()
-    .Enrich.With(new UserNameEnricher("not known yet", System.Environment.UserName))
+    .Enrich.WithUserName("not known yet", System.Environment.UserName)
     .CreateLogger();
+```
+
+Enrichers can also be defined in a configuration file by using [Serilog.Settings.AppSettings](https://github.com/serilog/serilog-settings-appsettings) as follows:
+
+```xml
+<appSettings>
+    <add key="serilog:using:SerilogWeb.Classic" value="SerilogWeb.Classic"/>
+    <add key="serilog:enrich:WithClaimValue.claimProperty" value="MyClaimPropertyName"/>
+    <add key="serilog:enrich:WithHttpRequestClientHostIP"/>
+    <add key="serilog:enrich:WithHttpRequestClientHostName"/>
+    <add key="serilog:enrich:WithHttpRequestId"/>
+    <add key="serilog:enrich:WithHttpRequestNumber"/>
+    <add key="serilog:enrich:WithHttpRequestRawUrl"/>
+    <add key="serilog:enrich:WithHttpRequestTraceId"/>
+    <add key="serilog:enrich:WithHttpRequestType"/>
+    <add key="serilog:enrich:WithHttpRequestUrl"/>
+    <add key="serilog:enrich:WithHttpRequestUrlReferrer"/>
+    <add key="serilog:enrich:WithHttpRequestUserAgent"/>
+    <add key="serilog:enrich:WithHttpSessionId"/>
+    <add key="serilog:enrich:WithUserName"/>
+</appSettings>
 ```
 
 ## HttpModule
