@@ -18,6 +18,8 @@ using Serilog.Events;
 
 namespace SerilogWeb.Classic.Enrichers
 {
+    using System.Web;
+
     /// <summary>
     /// Enrich log events with the Client Host Name.
     /// </summary>
@@ -40,6 +42,12 @@ namespace SerilogWeb.Classic.Enrichers
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
             if (HttpContextCurrent.Request == null)
+                return;
+
+            string doNotTrackHeader = HttpContextCurrent.Request.Headers.Get("DNT");
+
+            // Should not track when value equals 1
+            if (doNotTrackHeader != null && doNotTrackHeader.Equals("1"))
                 return;
 
             if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.UserHostName))

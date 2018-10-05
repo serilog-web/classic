@@ -74,6 +74,12 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContextCurrent.Request == null)
                 return;
 
+            string doNotTrackHeader = HttpContextCurrent.Request.Headers.Get("DNT");
+
+            // Should not track when value equals 1
+            if (doNotTrackHeader != null && doNotTrackHeader.Equals("1"))
+                return;
+
             if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.UserHostAddress))
                 return;
 
