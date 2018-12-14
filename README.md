@@ -136,7 +136,7 @@ SerilogWebClassic.Configure(cfg => cfg
 
 The configuration method calls are chainable, so a full configuration may look like : 
 ```csharp
-SerilogWebClassic.Configure(cfg => 
+SerilogWebClassic.Configure(cfg => cfg
   .UseLogger(myCustomLogger)
   .LogAtLevel(LogEventLevel.Debug)
   .IgnoreRequestsMatching(ctx => !ctx.Request.IsAuthenticated)
