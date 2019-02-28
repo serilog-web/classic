@@ -55,6 +55,7 @@
   <ItemGroup>
     <Compile Include="Classic\ApplicationLifecycleModule.cs" />
     <Compile Include="Classic\SerilogWebClassicConfigurationBuilder.cs" />
+    <Compile Include="Classic\Extensions\SerilogWebRequestExtensions.cs" />
     <Compile Include="SerilogWebClassicLoggerConfigurationExtensions.cs" />
     <Compile Include="Classic\WebRequestLoggingHandler.cs" />
     <Compile Include="Classic\Enrichers\ClaimValueEnricher.cs" />

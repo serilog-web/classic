@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Linq;
 using Serilog;
 using Serilog.Events;
+using SerilogWeb.Classic.Extensions;
 
 namespace SerilogWeb.Classic
 {
@@ -41,7 +42,8 @@ namespace SerilogWeb.Classic
             if (request == null || configuration.RequestFilter(_application.Context))
                 return;
 
-            var error = _application.Server.GetLastError();
+            var error = _application.Context.GetLastSerilogWebError() ?? _application.Server.GetLastError();
+
             var level = error != null || _application.Response.StatusCode >= 500 ? LogEventLevel.Error : configuration.RequestLoggingLevel;
 
             if (level == LogEventLevel.Error && error == null && _application.Context.AllErrors != null)
