@@ -5,6 +5,7 @@ using System.Linq;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using SerilogWeb.Classic.Extensions;
 using SerilogWeb.Classic.Tests.Support;
 using Xunit;
 
@@ -474,6 +475,28 @@ namespace SerilogWeb.Classic.Tests
             Assert.NotNull(LastEvent);
             Assert.Equal(LogEventLevel.Error, LastEvent.Level);
             Assert.Same(secondError, LastEvent.Exception);
+        }
+
+        [Fact]
+        public void RequestWithSerilogWebErrorAreLoggedAsError()
+        {
+            var error = new InvalidOperationException("Epic fail #1", new NotImplementedException());
+            TestContext.SimulateRequest(
+                (req) => { },
+                () =>
+                {
+                    App.Context.AddSerilogWebError(error);
+                    
+                   
+                    Assert.Null(App.Server.GetLastError());
+                    Assert.NotNull(App.Context.GetLastSerilogWebError());
+                    
+                    return new FakeHttpResponse();
+                });
+
+            Assert.NotNull(LastEvent);
+            Assert.Equal(LogEventLevel.Error, LastEvent.Level);
+            Assert.Same(error, LastEvent.Exception);
         }
     }
 }

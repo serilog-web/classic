@@ -7,7 +7,7 @@
     <description>Logs details of System.Web HTTP requests through Serilog.</description>
     <language>en-US</language>
     <projectUrl>https://github.com/serilog-web/classic</projectUrl>
-    <licenseUrl>https://www.apache.org/licenses/LICENSE-2.0</licenseUrl>
+    <license type="expression">Apache-2.0</license>
     <iconUrl>https://serilog-web.github.io/pages/images/serilog-web.png</iconUrl>
     <tags>serilog logging aspnet</tags>
   </metadata>
