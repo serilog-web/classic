@@ -364,6 +364,32 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void LogPostedFormDataHandlesNullKeyWhenFiltered()
+        {
+            var formData = new NameValueCollection
+            {
+                {"Foo","Bar" },
+                {"Qux", "Baz" },
+                {null, "" }
+            };
+
+            SerilogWebClassic.Configure(cfg => cfg
+                .EnableFormDataLogging(forms => forms
+                    .FilterKeywords(new List<string>
+                        {
+                            "NA"
+                        }))
+            );
+
+            TestContext.SimulateForm(formData);
+
+            var formDataProperty = LastEvent.Properties["FormData"];
+            Assert.NotNull(formDataProperty);
+            var expected = formData.ToSerilogNameValuePropertySequence();
+            Assert.Equal(expected.ToString(), formDataProperty.ToString());
+        }
+
+        [Fact]
         public void EnableDisable()
         {
             SerilogWebClassic.Configure(cfg => cfg
