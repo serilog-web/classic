@@ -1,4 +1,5 @@
 version: '{build}'
+skip_tags: true
 image: Visual Studio 2017
 build_script:
 - ps: ./Build.ps1 -majorMinor "5.0" -patch "$env:APPVEYOR_BUILD_VERSION" -customLogger "C:\Program Files\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
