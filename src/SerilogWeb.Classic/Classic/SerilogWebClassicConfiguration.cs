@@ -89,7 +89,17 @@ namespace SerilogWeb.Classic
         /// <param name="value">Value of the pair</param>
         internal string FilterPasswords(string key, string value)
         {
-            if (FilterPasswordsInFormData && FilteredKeywordsInFormData.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
+            if (!FilterPasswordsInFormData)
+            {
+                return value;
+            }
+
+            if (key == null)
+            {
+                return value;
+            }
+
+            if (FilteredKeywordsInFormData.Any(keyword => key.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) != -1))
             {
                 return "********";
             }
