@@ -59,7 +59,7 @@
     <Compile Include="SerilogWebClassicLoggerConfigurationExtensions.cs" />
     <Compile Include="Classic\WebRequestLoggingHandler.cs" />
     <Compile Include="Classic\Enrichers\ClaimValueEnricher.cs" />
-    <Compile Include="Classic\Enrichers\HttpContextCurrent.cs" />
+    <Compile Include="Classic\Enrichers\CurrentHttpContext.cs" />
     <Compile Include="Classic\Enrichers\HttpRequestClientHostIPEnricher.cs" />
     <Compile Include="Classic\Enrichers\HttpRequestClientHostNameEnricher.cs" />
     <Compile Include="Classic\Enrichers\HttpRequestIdEnricher.cs" />

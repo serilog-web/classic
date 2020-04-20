@@ -7,7 +7,7 @@ namespace SerilogWeb.Classic.Enrichers
     /// This helper class is used to handle special case introduced by ASP.NET integrated pipeline 
     /// when HttpContextCurrent.Request may throw instead of returning null.
     /// </summary>
-    static class HttpContextCurrent
+    static class CurrentHttpContext
     {
         /// <summary>
         /// Gets the <see cref="T:System.Web.HttpRequest"/> object for the current HTTP request.

@@ -40,13 +40,13 @@ namespace SerilogWeb.Classic.Enrichers
         {
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
             
-            if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.UserAgent))
+            if (string.IsNullOrWhiteSpace(CurrentHttpContext.Request.UserAgent))
                 return;
 
-            var userAgent = HttpContextCurrent.Request.UserAgent;
+            var userAgent = CurrentHttpContext.Request.UserAgent;
             var httpRequestUserAgentProperty = new LogEventProperty(HttpRequestUserAgentPropertyName, new ScalarValue(userAgent));
             logEvent.AddPropertyIfAbsent(httpRequestUserAgentProperty);
         }

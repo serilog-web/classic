@@ -43,13 +43,13 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
 
-            if (HttpContextCurrent.Request.UrlReferrer == null)
+            if (CurrentHttpContext.Request.UrlReferrer == null)
                 return;
 
-            var requestUrlReferrer = HttpContextCurrent.Request.UrlReferrer.ToString();
+            var requestUrlReferrer = CurrentHttpContext.Request.UrlReferrer.ToString();
             var httpRequestUrlReferrerProperty = new LogEventProperty(HttpRequestUrlReferrerPropertyName, new ScalarValue(requestUrlReferrer));
             logEvent.AddPropertyIfAbsent(httpRequestUrlReferrerProperty);
         }

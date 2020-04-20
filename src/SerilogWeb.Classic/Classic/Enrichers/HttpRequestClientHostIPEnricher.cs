@@ -71,10 +71,10 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.UserHostAddress))
+            if (string.IsNullOrWhiteSpace(CurrentHttpContext.Request.UserHostAddress))
                 return;
 
             string userHostAddress;
@@ -82,13 +82,13 @@ namespace SerilogWeb.Classic.Enrichers
             // Taking Proxy/-ies into consideration, too (if wanted and available)
             if (CheckForHttpProxies)
             {
-                userHostAddress = !string.IsNullOrWhiteSpace(HttpContextCurrent.Request.ServerVariables["HTTP_X_FORWARDED_FOR"])
-                ? HttpContextCurrent.Request.ServerVariables["HTTP_X_FORWARDED_FOR"]
-                : HttpContextCurrent.Request.UserHostAddress;
+                userHostAddress = !string.IsNullOrWhiteSpace(CurrentHttpContext.Request.ServerVariables["HTTP_X_FORWARDED_FOR"])
+                ? CurrentHttpContext.Request.ServerVariables["HTTP_X_FORWARDED_FOR"]
+                : CurrentHttpContext.Request.UserHostAddress;
             }
             else
             {
-                userHostAddress = HttpContextCurrent.Request.UserHostAddress;
+                userHostAddress = CurrentHttpContext.Request.UserHostAddress;
             }
 
             if (string.IsNullOrWhiteSpace(userHostAddress))
