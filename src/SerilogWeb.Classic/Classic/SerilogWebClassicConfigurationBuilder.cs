@@ -210,7 +210,7 @@ namespace SerilogWeb.Classic
             }
 
             /// <summary>
-            /// Specify that FormData should be attached to logged events only in case of error (Status > 500)
+            /// Specify that FormData should be attached to logged events only in case of error (status code >= 500)
             /// </summary>
             /// <returns>A configuration object to allow chaining</returns>
             public FormDataLoggingConfigurationBuilder OnlyOnError()
@@ -221,7 +221,7 @@ namespace SerilogWeb.Classic
             }
 
             /// <summary>
-            /// Specify that FormData should be attached to logged events only when the provided condistion is true
+            /// Specify that FormData should be attached to logged events only when the provided condition is true
             /// </summary>
             /// <param name="matchingFunction">The predicate that defines when FormData should be attached</param>
             /// <returns>A configuration object to allow chaining</returns>
