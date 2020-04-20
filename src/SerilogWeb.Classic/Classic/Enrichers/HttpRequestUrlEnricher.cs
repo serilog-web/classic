@@ -13,7 +13,6 @@
 // limitations under the License.
 
 using System;
-using System.Web;
 using Serilog.Core;
 using Serilog.Events;
 
@@ -41,7 +40,7 @@ namespace SerilogWeb.Classic.Enrichers
         {
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
-            if (HttpContext.Current?.Request?.Url == null)
+            if (HttpContextCurrent.Request?.Url == null)
                 return;
             
             var requestUrl = HttpContextCurrent.Request.Url.ToString();
