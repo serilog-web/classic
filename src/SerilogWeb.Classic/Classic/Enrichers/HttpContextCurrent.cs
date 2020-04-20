@@ -23,12 +23,9 @@ namespace SerilogWeb.Classic.Enrichers
         {
             get
             {
-                HttpContext httpContext = HttpContext.Current;
-                if (httpContext == null)
-                    return null;
                 try
                 {
-                    return httpContext.Request;
+                    return HttpContext.Current?.Request;
                 }
                 catch (HttpException)
                 {
