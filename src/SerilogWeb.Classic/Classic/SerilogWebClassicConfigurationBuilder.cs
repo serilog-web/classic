@@ -249,8 +249,13 @@ namespace SerilogWeb.Classic
             /// </summary>
             /// <param name="keywordBlackList">The black-listed keywords</param>
             /// <returns>A configuration object to allow chaining</returns>
+            /// <exception cref="System.ArgumentNullException"/>
+            /// <exception cref="System.ArgumentException"/>
             public FormDataLoggingConfigurationBuilder FilterKeywords(IEnumerable<string> keywordBlackList)
             {
+                if (keywordBlackList == null) throw new ArgumentNullException(nameof(keywordBlackList));
+                if (keywordBlackList.Contains(null)) throw new ArgumentException($"The {nameof(keywordBlackList)} argument is invalid. Keywords cannot be null.");
+
                 var keywords = new List<string>(keywordBlackList);
                 if (!keywords.Any())
                 {
