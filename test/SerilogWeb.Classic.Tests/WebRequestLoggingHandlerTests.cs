@@ -328,6 +328,43 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void ErrorIfMethodFilterKeywordsCalledWithNullCollection()
+        {
+            Type expectedExceptionType = typeof(ArgumentNullException);
+            string expectedExceptionMessage = "Value cannot be null.\r\nParameter name: keywordBlackList";
+
+            var actualException = Assert.Throws(expectedExceptionType, () =>
+                SerilogWebClassic.Configure(cfg => cfg
+                    .EnableFormDataLogging(forms => forms
+                        .FilterKeywords(null)
+                ))
+            );
+
+            Assert.NotNull(actualException);
+            Assert.IsType(expectedExceptionType, actualException);
+            Assert.Equal(expectedExceptionMessage, actualException.Message);
+        }
+
+        [Fact]
+        public void ErrorIfMethodFilterKeywordsCalledWithCollectionContainingNull()
+        {
+            Type expectedExceptionType = typeof(ArgumentException);
+            string expectedExceptionMessage = "The keywordBlackList argument is invalid. Keywords cannot be null.";
+            string nullKeyword = null;
+
+            var actualException = Assert.Throws(expectedExceptionType, () =>
+                SerilogWebClassic.Configure(cfg => cfg
+                    .EnableFormDataLogging(forms => forms
+                        .FilterKeywords(new[] { nullKeyword })
+                ))
+            );
+
+            Assert.NotNull(actualException);
+            Assert.IsType(expectedExceptionType, actualException);
+            Assert.Equal(expectedExceptionMessage, actualException.Message);
+        }
+
+        [Fact]
         public void PasswordBlackListCanBeCustomized()
         {
             SerilogWebClassic.Configure(cfg => cfg
