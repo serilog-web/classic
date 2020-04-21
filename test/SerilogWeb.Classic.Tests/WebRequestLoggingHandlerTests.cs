@@ -452,7 +452,7 @@ namespace SerilogWeb.Classic.Tests
         [InlineData(500, true)]
         [InlineData(501, true)]
         [InlineData(499, false)]
-        public void StatusCodeBiggerThan500AreLoggedAsError(int httpStatusCode, bool isLoggedAsError)
+        public void StatusCodeEqualOrBiggerThan500AreLoggedAsError(int httpStatusCode, bool isLoggedAsError)
         {
             TestContext.SimulateRequest(httpStatusCode: httpStatusCode);
 

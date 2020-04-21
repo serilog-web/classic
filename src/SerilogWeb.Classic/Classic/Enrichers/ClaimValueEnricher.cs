@@ -70,7 +70,7 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
 
             var user = HttpContext.Current.User;

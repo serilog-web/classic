@@ -26,7 +26,7 @@ namespace SerilogWeb.Classic
         {
             get
             {
-                var req = HttpContextCurrent.Request;
+                var req = CurrentHttpContext.Request;
                 if (req == null) return null;
                 return new HttpRequestWrapper(req);
             }

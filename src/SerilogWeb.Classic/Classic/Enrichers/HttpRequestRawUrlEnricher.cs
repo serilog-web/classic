@@ -43,13 +43,13 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.RawUrl))
+            if (string.IsNullOrWhiteSpace(CurrentHttpContext.Request.RawUrl))
                 return;
 
-            var requestRawUrl = HttpContextCurrent.Request.RawUrl;
+            var requestRawUrl = CurrentHttpContext.Request.RawUrl;
             var httpRequestRawUrlProperty = new LogEventProperty(HttpRequestRawUrlPropertyName, new ScalarValue(requestRawUrl));
             logEvent.AddPropertyIfAbsent(httpRequestRawUrlProperty);
         }

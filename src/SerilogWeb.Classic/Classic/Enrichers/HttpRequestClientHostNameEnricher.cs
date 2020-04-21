@@ -39,13 +39,13 @@ namespace SerilogWeb.Classic.Enrichers
         {
             if (logEvent == null) throw new ArgumentNullException("logEvent");
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.UserHostName))
+            if (string.IsNullOrWhiteSpace(CurrentHttpContext.Request.UserHostName))
                 return;
             
-            var userHostName = HttpContextCurrent.Request.UserHostName;
+            var userHostName = CurrentHttpContext.Request.UserHostName;
             var httpRequestClientHostnameProperty = new LogEventProperty(HttpRequestClientHostNamePropertyName, new ScalarValue(userHostName));
             logEvent.AddPropertyIfAbsent(httpRequestClientHostnameProperty);
         }

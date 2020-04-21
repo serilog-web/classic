@@ -86,7 +86,7 @@ namespace SerilogWeb.Classic
         /// <summary>
         /// When set to Always, form data will be written via an event (using
         /// severity from FormDataLoggingLevel).  When set to OnlyOnError, this
-        /// will only be written if the Response has a 500 status.
+        /// will only be written if the Response has status code >= 500.
         /// When set to OnMatch <see cref="ShouldLogPostedFormData"/>
         /// is executed to determine if form data is logged.
         /// The default is Never. Requires that <see cref="IsEnabled"/> is also

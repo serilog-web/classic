@@ -43,13 +43,13 @@ namespace SerilogWeb.Classic.Enrichers
             if (HttpContext.Current == null)
                 return;
 
-            if (HttpContextCurrent.Request == null)
+            if (CurrentHttpContext.Request == null)
                 return;
 
-            if (string.IsNullOrWhiteSpace(HttpContextCurrent.Request.RequestType))
+            if (string.IsNullOrWhiteSpace(CurrentHttpContext.Request.RequestType))
                 return;
 
-            var requestType = HttpContextCurrent.Request.RequestType;
+            var requestType = CurrentHttpContext.Request.RequestType;
             var httpRequestTypeProperty = new LogEventProperty(HttpRequestTypePropertyName, new ScalarValue(requestType));
             logEvent.AddPropertyIfAbsent(httpRequestTypeProperty);
         }
