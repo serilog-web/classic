@@ -328,6 +328,37 @@ namespace SerilogWeb.Classic.Tests
         }
 
         [Fact]
+        public void ErrorIfMethodFilterKeywordsCalledWithNullCollection()
+        {
+            var actualException = Assert.Throws<ArgumentNullException>(() =>
+                SerilogWebClassic.Configure(cfg => cfg
+                    .EnableFormDataLogging(forms => forms
+                        .FilterKeywords(null)
+                ))
+            );
+
+            Assert.NotNull(actualException);
+            Assert.IsType<ArgumentNullException>(actualException);
+            Assert.Equal("Value cannot be null.\r\nParameter name: keywordBlackList", actualException.Message);
+        }
+
+        [Fact]
+        public void ErrorIfMethodFilterKeywordsCalledWithCollectionContainingNull()
+        {
+            string nullKeyword = null;
+            var actualException = Assert.Throws<ArgumentException>(() =>
+                SerilogWebClassic.Configure(cfg => cfg
+                    .EnableFormDataLogging(forms => forms
+                        .FilterKeywords(new[] { nullKeyword })
+                ))
+            );
+
+            Assert.NotNull(actualException);
+            Assert.IsType<ArgumentException>(actualException);
+            Assert.Equal("The parameter is invalid. Keywords cannot be null.\r\nParameter name: keywordBlackList", actualException.Message);
+        }
+
+        [Fact]
         public void PasswordBlackListCanBeCustomized()
         {
             SerilogWebClassic.Configure(cfg => cfg
@@ -512,11 +543,11 @@ namespace SerilogWeb.Classic.Tests
                 () =>
                 {
                     App.Context.AddSerilogWebError(error);
-                    
-                   
+
+
                     Assert.Null(App.Server.GetLastError());
                     Assert.NotNull(App.Context.GetLastSerilogWebError());
-                    
+
                     return new FakeHttpResponse();
                 });
 
