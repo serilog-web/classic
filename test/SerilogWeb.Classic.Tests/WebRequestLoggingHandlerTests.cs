@@ -330,10 +330,7 @@ namespace SerilogWeb.Classic.Tests
         [Fact]
         public void ErrorIfMethodFilterKeywordsCalledWithNullCollection()
         {
-            Type expectedExceptionType = typeof(ArgumentNullException);
-            string expectedExceptionMessage = "Value cannot be null.\r\nParameter name: keywordBlackList";
-
-            var actualException = Assert.Throws(expectedExceptionType, () =>
+            var actualException = Assert.Throws<ArgumentNullException>(() =>
                 SerilogWebClassic.Configure(cfg => cfg
                     .EnableFormDataLogging(forms => forms
                         .FilterKeywords(null)
@@ -341,18 +338,15 @@ namespace SerilogWeb.Classic.Tests
             );
 
             Assert.NotNull(actualException);
-            Assert.IsType(expectedExceptionType, actualException);
-            Assert.Equal(expectedExceptionMessage, actualException.Message);
+            Assert.IsType<ArgumentNullException>(actualException);
+            Assert.Equal("Value cannot be null.\r\nParameter name: keywordBlackList", actualException.Message);
         }
 
         [Fact]
         public void ErrorIfMethodFilterKeywordsCalledWithCollectionContainingNull()
         {
-            Type expectedExceptionType = typeof(ArgumentException);
-            string expectedExceptionMessage = "The keywordBlackList argument is invalid. Keywords cannot be null.";
             string nullKeyword = null;
-
-            var actualException = Assert.Throws(expectedExceptionType, () =>
+            var actualException = Assert.Throws<ArgumentException>(() =>
                 SerilogWebClassic.Configure(cfg => cfg
                     .EnableFormDataLogging(forms => forms
                         .FilterKeywords(new[] { nullKeyword })
@@ -360,8 +354,8 @@ namespace SerilogWeb.Classic.Tests
             );
 
             Assert.NotNull(actualException);
-            Assert.IsType(expectedExceptionType, actualException);
-            Assert.Equal(expectedExceptionMessage, actualException.Message);
+            Assert.IsType<ArgumentException>(actualException);
+            Assert.Equal("The parameter is invalid. Keywords cannot be null.\r\nParameter name: keywordBlackList", actualException.Message);
         }
 
         [Fact]
@@ -549,11 +543,11 @@ namespace SerilogWeb.Classic.Tests
                 () =>
                 {
                     App.Context.AddSerilogWebError(error);
-                    
-                   
+
+
                     Assert.Null(App.Server.GetLastError());
                     Assert.NotNull(App.Context.GetLastSerilogWebError());
-                    
+
                     return new FakeHttpResponse();
                 });
 

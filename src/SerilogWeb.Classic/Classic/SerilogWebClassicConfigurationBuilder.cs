@@ -254,7 +254,7 @@ namespace SerilogWeb.Classic
             public FormDataLoggingConfigurationBuilder FilterKeywords(IEnumerable<string> keywordBlackList)
             {
                 if (keywordBlackList == null) throw new ArgumentNullException(nameof(keywordBlackList));
-                if (keywordBlackList.Contains(null)) throw new ArgumentException($"The {nameof(keywordBlackList)} argument is invalid. Keywords cannot be null.");
+                if (keywordBlackList.Contains(null)) throw new ArgumentException($"The parameter is invalid. Keywords cannot be null.", nameof(keywordBlackList));
 
                 var keywords = new List<string>(keywordBlackList);
                 if (!keywords.Any())
