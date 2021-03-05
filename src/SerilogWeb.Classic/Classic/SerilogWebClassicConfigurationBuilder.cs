@@ -120,14 +120,11 @@ namespace SerilogWeb.Classic
         /// Configure at which level HTTP requests are logged.
         /// Default is Information
         /// </summary>
-        /// <param name="level">The level to override the default value</param>
         /// <param name="requestElapsedMSLogLevel">Override the default log level based on the total request time in milliseconds</param>
         /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfigurationBuilder LogAtLevel(LogEventLevel level, Func<long, LogEventLevel> requestElapsedMSLogLevel)
+        public SerilogWebClassicConfigurationBuilder LogAtLevel(Func<long, LogEventLevel> requestElapsedMSLogLevel)
         {
-            RequestLoggingLevel = level;
             RequestElapsedMSLogLevel = requestElapsedMSLogLevel;
-
             return this;
         }
 
