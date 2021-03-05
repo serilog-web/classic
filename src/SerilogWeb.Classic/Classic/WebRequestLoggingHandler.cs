@@ -44,7 +44,9 @@ namespace SerilogWeb.Classic
 
             var error = _application.Context.GetLastSerilogWebError() ?? _application.Server.GetLastError();
 
-            var level = error != null || _application.Response.StatusCode >= 500 ? LogEventLevel.Error : configuration.RequestLoggingLevel;
+            var configurationLevel = configuration.RequestElapsedMSLogLevel != null ? configuration.RequestElapsedMSLogLevel(stopwatch.ElapsedMilliseconds) : configuration.RequestLoggingLevel;
+
+            var level = error != null || _application.Response.StatusCode >= 500 ? LogEventLevel.Error : configurationLevel;
 
             if (level == LogEventLevel.Error && error == null && _application.Context.AllErrors != null)
             {

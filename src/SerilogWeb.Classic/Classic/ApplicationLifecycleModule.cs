@@ -39,6 +39,7 @@ namespace SerilogWeb.Classic
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
                 requestLoggingLevel: Config.RequestLoggingLevel,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: value,
@@ -72,6 +73,7 @@ namespace SerilogWeb.Classic
                 SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                     isEnabled: Config.IsEnabled,
                     requestLoggingLevel: Config.RequestLoggingLevel,
+                    requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                     requestFilter: value,
                     formDataLoggingLevel: Config.FormDataLoggingLevel,
                     customLogger: Config.CustomLogger,
@@ -99,6 +101,7 @@ namespace SerilogWeb.Classic
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
                 requestLoggingLevel: Config.RequestLoggingLevel,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -120,6 +123,7 @@ namespace SerilogWeb.Classic
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
                 requestLoggingLevel: Config.RequestLoggingLevel,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -141,6 +145,7 @@ namespace SerilogWeb.Classic
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
                 requestLoggingLevel: Config.RequestLoggingLevel,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -162,6 +167,7 @@ namespace SerilogWeb.Classic
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: value,
                 requestLoggingLevel: Config.RequestLoggingLevel,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -183,6 +189,7 @@ namespace SerilogWeb.Classic
                 isEnabled: Config.IsEnabled,
                 requestLoggingLevel: value,
                 requestFilter: Config.RequestFilter,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
                 logPostedFormData: Config.LogPostedFormData,
@@ -203,6 +210,7 @@ namespace SerilogWeb.Classic
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
                 requestLoggingLevel: Config.RequestLoggingLevel,
+                requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: value,
                 customLogger: Config.CustomLogger,
@@ -228,6 +236,7 @@ namespace SerilogWeb.Classic
                 SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                     isEnabled: Config.IsEnabled,
                     requestLoggingLevel: Config.RequestLoggingLevel,
+                    requestElapsedMSLogLevel: Config.RequestElapsedMSLogLevel,
                     requestFilter: Config.RequestFilter,
                     formDataLoggingLevel: Config.FormDataLoggingLevel,
                     customLogger: Config.CustomLogger,
