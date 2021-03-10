@@ -19,7 +19,7 @@ namespace SerilogWeb.Classic
         internal SerilogWebClassicConfiguration(
             bool isEnabled,
             LogEventLevel requestLoggingLevel,
-            Func<long, LogEventLevel> requestElapsedMSLogLevel,
+            Func<HttpContextBase, TimeSpan, LogEventLevel> requestContextLogLevel,
             Func<HttpContextBase, bool> requestFilter,
             LogEventLevel formDataLoggingLevel,
             ILogger customLogger,
@@ -30,7 +30,7 @@ namespace SerilogWeb.Classic
         {
             IsEnabled = isEnabled;
             RequestLoggingLevel = requestLoggingLevel;
-            RequestElapsedMSLogLevel = requestElapsedMSLogLevel;
+            RequestContextLogLevel = requestContextLogLevel;
             RequestFilter = requestFilter;
             FormDataLoggingLevel = formDataLoggingLevel;
             CustomLogger = customLogger;
@@ -68,7 +68,7 @@ namespace SerilogWeb.Classic
         internal bool IsEnabled { get; }
 
         internal LogEventLevel RequestLoggingLevel { get; }
-        internal Func<long, LogEventLevel> RequestElapsedMSLogLevel { get; }
+        internal Func<HttpContextBase, TimeSpan, LogEventLevel> RequestContextLogLevel { get; }
         internal ILogger CustomLogger { get; }
         internal Func<HttpContextBase, bool> RequestFilter { get; }
 

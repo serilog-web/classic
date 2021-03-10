@@ -18,7 +18,7 @@ namespace SerilogWeb.Classic
         private bool IsEnabled { get; set; } = true;
 
         private LogEventLevel RequestLoggingLevel { get; set; }
-        private Func<long, LogEventLevel> RequestElapsedMSLogLevel { get; set; }
+        private Func<HttpContextBase, TimeSpan, LogEventLevel> RequestContextLogLevel { get; set; }
         private ILogger CustomLogger { get; set; }
         private Func<HttpContextBase, bool> RequestFilter { get; set; }
 
@@ -40,7 +40,7 @@ namespace SerilogWeb.Classic
             CustomLogger = configToCopy.CustomLogger;
             IsEnabled = configToCopy.IsEnabled;
             RequestLoggingLevel = configToCopy.RequestLoggingLevel;
-            RequestElapsedMSLogLevel = configToCopy.RequestElapsedMSLogLevel;
+            RequestContextLogLevel = configToCopy.RequestContextLogLevel;
             RequestFilter = configToCopy.RequestFilter;
             FormDataLoggingLevel = configToCopy.FormDataLoggingLevel;
             LogPostedFormData = configToCopy.LogPostedFormData;
@@ -72,7 +72,7 @@ namespace SerilogWeb.Classic
             return new SerilogWebClassicConfiguration(
                 isEnabled: IsEnabled,
                 requestLoggingLevel: RequestLoggingLevel,
-                requestElapsedMSLogLevel: RequestElapsedMSLogLevel,
+                requestContextLogLevel: RequestContextLogLevel,
                 requestFilter: RequestFilter,
                 formDataLoggingLevel: FormDataLoggingLevel,
                 customLogger: CustomLogger,
@@ -120,11 +120,11 @@ namespace SerilogWeb.Classic
         /// Configure at which level HTTP requests are logged.
         /// Default is Information
         /// </summary>
-        /// <param name="requestElapsedMSLogLevel">Override the default log level based on the total request time in milliseconds</param>
+        /// <param name="requestContextLogLevel">Override the default log level based on the current http context and total request time</param>
         /// <returns>A configuration object to allow chaining</returns>
-        public SerilogWebClassicConfigurationBuilder LogAtLevel(Func<long, LogEventLevel> requestElapsedMSLogLevel)
+        public SerilogWebClassicConfigurationBuilder LogAtLevel(Func<HttpContextBase, TimeSpan, LogEventLevel> requestContextLogLevel)
         {
-            RequestElapsedMSLogLevel = requestElapsedMSLogLevel;
+            RequestContextLogLevel = requestContextLogLevel;
             return this;
         }
 
