@@ -98,6 +98,14 @@ SerilogWebClassic.Configure(cfg => cfg
   .LogAtLevel(LogEventLevel.Debug)
 );
 ```
+(new in [v5.1](https://github.com/serilog-web/classic/releases/tag/v5.1.66)) If you want even more control, you can pass a callback to `.LogAtLevel()` and provide a `Func<HttpContextBase, TimeSpan, LogEventLevel>` like this : 
+
+```csharp
+SerilogWebClassic.Configure(cfg => cfg
+  .LogAtLevel((context, elapsed) => elapsed.TotalMilliseconds > 3000 ? LogEventLevel.Warning : LogEventLevel.Information)
+);
+```
+
 
 To enable the capture of posted form data:
 
