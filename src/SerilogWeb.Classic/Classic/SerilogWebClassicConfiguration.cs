@@ -18,8 +18,7 @@ namespace SerilogWeb.Classic
 
         internal SerilogWebClassicConfiguration(
             bool isEnabled,
-            LogEventLevel requestLoggingLevel,
-            Func<HttpContextBase, TimeSpan, LogEventLevel> requestContextLogLevel,
+            Func<HttpContextBase, TimeSpan, LogEventLevel> logLevelEvaluator,
             Func<HttpContextBase, bool> requestFilter,
             LogEventLevel formDataLoggingLevel,
             ILogger customLogger,
@@ -29,8 +28,7 @@ namespace SerilogWeb.Classic
             IEnumerable<string> filteredKeywordsInFormData)
         {
             IsEnabled = isEnabled;
-            RequestLoggingLevel = requestLoggingLevel;
-            RequestContextLogLevel = requestContextLogLevel;
+            LogLevelEvaluator = logLevelEvaluator;
             RequestFilter = requestFilter;
             FormDataLoggingLevel = formDataLoggingLevel;
             CustomLogger = customLogger;
@@ -67,8 +65,7 @@ namespace SerilogWeb.Classic
 
         internal bool IsEnabled { get; }
 
-        internal LogEventLevel RequestLoggingLevel { get; }
-        internal Func<HttpContextBase, TimeSpan, LogEventLevel> RequestContextLogLevel { get; }
+        internal Func<HttpContextBase, TimeSpan, LogEventLevel> LogLevelEvaluator { get; }
         internal ILogger CustomLogger { get; }
         internal Func<HttpContextBase, bool> RequestFilter { get; }
 

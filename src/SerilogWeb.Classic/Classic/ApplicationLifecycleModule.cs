@@ -38,8 +38,7 @@ namespace SerilogWeb.Classic
             get => Config.Logger;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
-                requestLoggingLevel: Config.RequestLoggingLevel,
-                requestContextLogLevel: Config.RequestContextLogLevel,
+                logLevelEvaluator: Config.LogLevelEvaluator,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: value,
@@ -72,8 +71,7 @@ namespace SerilogWeb.Classic
                 if (value == null) throw new ArgumentNullException(nameof(value));
                 SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                     isEnabled: Config.IsEnabled,
-                    requestLoggingLevel: Config.RequestLoggingLevel,
-                    requestContextLogLevel: Config.RequestContextLogLevel,
+                    logLevelEvaluator: Config.LogLevelEvaluator,
                     requestFilter: value,
                     formDataLoggingLevel: Config.FormDataLoggingLevel,
                     customLogger: Config.CustomLogger,
@@ -100,8 +98,7 @@ namespace SerilogWeb.Classic
             get => Config.LogPostedFormData;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
-                requestLoggingLevel: Config.RequestLoggingLevel,
-                requestContextLogLevel: Config.RequestContextLogLevel,
+                logLevelEvaluator: Config.LogLevelEvaluator,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -122,8 +119,7 @@ namespace SerilogWeb.Classic
             get => Config.FilterPasswordsInFormData;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
-                requestLoggingLevel: Config.RequestLoggingLevel,
-                requestContextLogLevel: Config.RequestContextLogLevel,
+                logLevelEvaluator: Config.LogLevelEvaluator,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -144,8 +140,7 @@ namespace SerilogWeb.Classic
             get => Config.FilteredKeywordsInFormData;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
-                requestLoggingLevel: Config.RequestLoggingLevel,
-                requestContextLogLevel: Config.RequestContextLogLevel,
+                logLevelEvaluator: Config.LogLevelEvaluator,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -166,8 +161,7 @@ namespace SerilogWeb.Classic
             get => Config.IsEnabled;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: value,
-                requestLoggingLevel: Config.RequestLoggingLevel,
-                requestContextLogLevel: Config.RequestContextLogLevel,
+                logLevelEvaluator: Config.LogLevelEvaluator,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
@@ -184,12 +178,10 @@ namespace SerilogWeb.Classic
         [Obsolete("Obsolete since v4.1 - Use SerilogWebClassic.Configure(cfg => cfg.LogAtLevel(level))")]
         public static LogEventLevel RequestLoggingLevel
         {
-            get => Config.RequestLoggingLevel;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
-                requestLoggingLevel: value,
+                logLevelEvaluator: (httpContext, elapsed) => value,
                 requestFilter: Config.RequestFilter,
-                requestContextLogLevel: Config.RequestContextLogLevel,
                 formDataLoggingLevel: Config.FormDataLoggingLevel,
                 customLogger: Config.CustomLogger,
                 logPostedFormData: Config.LogPostedFormData,
@@ -209,8 +201,7 @@ namespace SerilogWeb.Classic
             get => Config.FormDataLoggingLevel;
             set => SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                 isEnabled: Config.IsEnabled,
-                requestLoggingLevel: Config.RequestLoggingLevel,
-                requestContextLogLevel: Config.RequestContextLogLevel,
+                logLevelEvaluator: Config.LogLevelEvaluator,
                 requestFilter: Config.RequestFilter,
                 formDataLoggingLevel: value,
                 customLogger: Config.CustomLogger,
@@ -235,8 +226,7 @@ namespace SerilogWeb.Classic
                 if (value == null) throw new ArgumentNullException(nameof(value));
                 SerilogWebClassic.Configuration = new SerilogWebClassicConfiguration(
                     isEnabled: Config.IsEnabled,
-                    requestLoggingLevel: Config.RequestLoggingLevel,
-                    requestContextLogLevel: Config.RequestContextLogLevel,
+                    logLevelEvaluator: Config.LogLevelEvaluator,
                     requestFilter: Config.RequestFilter,
                     formDataLoggingLevel: Config.FormDataLoggingLevel,
                     customLogger: Config.CustomLogger,

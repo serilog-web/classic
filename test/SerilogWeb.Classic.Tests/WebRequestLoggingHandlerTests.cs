@@ -86,6 +86,40 @@ namespace SerilogWeb.Classic.Tests
             Assert.Equal(requestLoggingLevel, evt.Level);
         }
 
+        [Theory]
+        [InlineData(LogEventLevel.Verbose)]
+        [InlineData(LogEventLevel.Debug)]
+        [InlineData(LogEventLevel.Information)]
+        [InlineData(LogEventLevel.Warning)]
+        [InlineData(LogEventLevel.Error)]
+        [InlineData(LogEventLevel.Fatal)]
+        public void RequestLogLevelEvaluator(LogEventLevel requestLoggingLevel)
+        {
+            SerilogWebClassic.Configure(cfg => cfg
+                .LogAtLevel((context, elapsed) => requestLoggingLevel)
+            );
+
+            TestContext.SimulateRequest();
+
+            var evt = LastEvent;
+            Assert.NotNull(evt);
+            Assert.Equal(requestLoggingLevel, evt.Level);
+        }
+
+        [Fact]
+        public void DynamicRequestLogLevelEvaluator()
+        {
+            SerilogWebClassic.Configure(cfg => cfg
+                .LogAtLevel((context, elapsed) => elapsed.TotalMilliseconds > 3000 ? LogEventLevel.Warning : LogEventLevel.Information)
+            );
+
+            TestContext.SimulateRequest(sleepDurationMilliseconds: 4000);
+
+            var evt = LastEvent;
+            Assert.NotNull(evt);
+            Assert.Equal(LogEventLevel.Warning, evt.Level);
+        }
+
         [Fact]
         public void LogPostedFormData()
         {
