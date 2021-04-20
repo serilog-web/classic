@@ -17,7 +17,7 @@ namespace SerilogWeb.Classic
 
         private bool IsEnabled { get; set; } = true;
 
-        private LogEventLevel RequestLoggingLevel { get; set; }
+        private Func<HttpContextBase, TimeSpan, LogEventLevel> LogLevelEvaluator { get; set; }
         private ILogger CustomLogger { get; set; }
         private Func<HttpContextBase, bool> RequestFilter { get; set; }
 
@@ -38,7 +38,7 @@ namespace SerilogWeb.Classic
             if (configToCopy == null) throw new ArgumentNullException(nameof(configToCopy));
             CustomLogger = configToCopy.CustomLogger;
             IsEnabled = configToCopy.IsEnabled;
-            RequestLoggingLevel = configToCopy.RequestLoggingLevel;
+            LogLevelEvaluator = configToCopy.LogLevelEvaluator;
             RequestFilter = configToCopy.RequestFilter;
             FormDataLoggingLevel = configToCopy.FormDataLoggingLevel;
             LogPostedFormData = configToCopy.LogPostedFormData;
@@ -51,7 +51,7 @@ namespace SerilogWeb.Classic
         {
             CustomLogger = null;
             IsEnabled = true;
-            RequestLoggingLevel = LogEventLevel.Information;
+            LogLevelEvaluator = (ctx, elapsed) => LogEventLevel.Information;
             RequestFilter = AlwaysFalse;
             ResetFormDataLogging();
         }
@@ -69,7 +69,7 @@ namespace SerilogWeb.Classic
         {
             return new SerilogWebClassicConfiguration(
                 isEnabled: IsEnabled,
-                requestLoggingLevel: RequestLoggingLevel,
+                logLevelEvaluator: LogLevelEvaluator,
                 requestFilter: RequestFilter,
                 formDataLoggingLevel: FormDataLoggingLevel,
                 customLogger: CustomLogger,
@@ -109,7 +109,18 @@ namespace SerilogWeb.Classic
         /// <returns>A configuration object to allow chaining</returns>
         public SerilogWebClassicConfigurationBuilder LogAtLevel(LogEventLevel level)
         {
-            RequestLoggingLevel = level;
+            LogLevelEvaluator = (ctx, elapsed) => level;
+            return this;
+        }
+
+        /// <summary>
+        /// Configure at which level HTTP requests are logged dynamically depending on the context
+        /// </summary>
+        /// <param name="logLevelEvaluator">Set the log level based on the current http context and total request time</param>
+        /// <returns>A configuration object to allow chaining</returns>
+        public SerilogWebClassicConfigurationBuilder LogAtLevel(Func<HttpContextBase, TimeSpan, LogEventLevel> logLevelEvaluator)
+        {
+            LogLevelEvaluator = logLevelEvaluator;
             return this;
         }
 
