@@ -1,5 +1,8 @@
 # SerilogWeb.Classic [![Build status](https://ci.appveyor.com/api/projects/status/lpf4kdc7su3l67be?svg=true)](https://ci.appveyor.com/project/serilog-web/classic) [![NuGet](https://img.shields.io/nuget/v/SerilogWeb.Classic.svg)](https://www.nuget.org/packages/serilogweb.classic)
 
+>  **Deprecation notice:** this package is no longer maintained. The world has moved on to ASP.NET Core. Take a look at [Serilog.AspNetCore](https://github.com/serilog/serilog-aspnetcore) instead!
+
+
 Web request logging and enrichment for classic ASP.NET applications (System.Web).
 
 **Package** - [SerilogWeb.Classic](http://nuget.org/packages/serilogweb.classic)
